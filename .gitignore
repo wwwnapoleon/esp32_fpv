@@ -62,4 +62,4 @@ wifi_config.h
 __pycache__/
 *.py[cod]
 .venv/
-venv/
+venv/database/
