@@ -1,37 +1,36 @@
 // ============================================================
-//  Аутентификация: QR (гость) + логин/пароль (админ)
-//  Использует SB (см. config.js)
+//  Аутентификация
+//  Использует SB (см. config.js), НЕ supabase
 // ============================================================
 
-// ---- Форма логина на index.html ----
-const loginForm = document.getElementById('admin-login');
+var loginForm = document.getElementById('admin-login');
 
 if (loginForm) {
-  loginForm.addEventListener('submit', async (e) => {
+  loginForm.addEventListener('submit', async function(e) {
     e.preventDefault();
-    const email    = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-    const errorEl  = document.getElementById('login-error');
+    var email    = document.getElementById('email').value.trim();
+    var password = document.getElementById('password').value;
+    var errorEl  = document.getElementById('login-error');
     errorEl.textContent = '';
 
     if (!SB) {
       errorEl.textContent =
-        '⚠️ Supabase не настроен. Вход для админов недоступен. ' +
-        'Заполни SUPABASE_URL и SUPABASE_ANON_KEY в config.js';
+        '⚠️ Supabase не настроен. Вход только через QR (гость).';
       return;
     }
 
     try {
-      const { data, error } = await SB.auth.signInWithPassword({
-        email, password
+      var result = await SB.auth.signInWithPassword({
+        email: email,
+        password: password
       });
 
-      if (error) throw error;
+      if (result.error) throw result.error;
 
       sessionStorage.setItem('user', JSON.stringify({
         role: 'admin',
-        email: data.user.email,
-        id: data.user.id
+        email: result.data.user.email,
+        id: result.data.user.id
       }));
 
       window.location.href = 'dashboard.html';
@@ -43,24 +42,22 @@ if (loginForm) {
   });
 }
 
-// ---- Проверка роли ----
 function checkAccess(requiredRole) {
-  const urlParams = new URLSearchParams(window.location.search);
-  const roleFromUrl = urlParams.get('role');
+  var urlParams = new URLSearchParams(window.location.search);
+  var roleFromUrl = urlParams.get('role');
 
-  // QR → гость
   if (roleFromUrl === 'guest') {
     sessionStorage.setItem('user', JSON.stringify({ role: 'guest' }));
     return { role: 'guest' };
   }
 
-  const userJson = sessionStorage.getItem('user');
+  var userJson = sessionStorage.getItem('user');
   if (!userJson) {
     window.location.href = 'index.html';
     return null;
   }
 
-  const user = JSON.parse(userJson);
+  var user = JSON.parse(userJson);
 
   if (requiredRole === 'admin' && user.role !== 'admin') {
     alert('Доступ только для администраторов');
@@ -71,7 +68,6 @@ function checkAccess(requiredRole) {
   return user;
 }
 
-// ---- Выход ----
 function logout() {
   sessionStorage.removeItem('user');
   if (SB) SB.auth.signOut();
