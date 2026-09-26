@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Вход · ЭКО-ШКОЛА</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="login-page">
+  <div class="login-container">
+
+    <div class="logo-block">
+      <h1>🌿 ЭКО-ШКОЛА</h1>
+      <p class="subtitle">Вход в проект</p>
+    </div>
+
+    <div class="login-method">
+      <h2>📱 Быстрый вход</h2>
+      <p>Отсканируйте QR-код камерой телефона</p>
+      <a href="dashboard.html?role=guest" class="qr-link">
+        <img src="images/qr.png" alt="QR-код" class="qr-image"
+             onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(location.origin + location.pathname.replace('login.html','dashboard.html'))">
+      </a>
+      <p class="hint">Вход для гостей — только просмотр</p>
+    </div>
+
+    <div class="divider"><span>или</span></div>
+
+    <div class="login-method">
+      <h2>🔐 Вход для администраторов</h2>
+      <form id="admin-login" autocomplete="off">
+        <div class="input-group">
+          <label for="email">Email или логин</label>
+          <input type="text" id="email" placeholder="admin@school.ru" required>
+        </div>
+        <div class="input-group">
+          <label for="password">Пароль</label>
+          <input type="password" id="password" placeholder="••••••••" required>
+        </div>
+        <button type="submit">Войти</button>
+      </form>
+      <p id="login-error" class="error"></p>
+    </div>
+
+    <p class="footer-hint">
+      Нет аккаунта? <a href="register.html">Зарегистрироваться</a>
+    </p>
+
+    <a href="index.html" class="btn-back">← На главную</a>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>
