@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Вход · ЭКО-ШКОЛА</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="login-page">
+  <div class="login-container">
+
+    <div class="logo-block">
+      <img src="images/logo.png" alt="Логотип" class="logo" onerror="this.style.display='none'">
+      <h1>ЭКО-ШКОЛА</h1>
+      <p class="subtitle">Лицей №8 · Проект виртуального зрения</p>
+    </div>
+
+    <!-- QR-код для обычных пользователей -->
+    <div class="login-method">
+      <h2>📱 Быстрый вход</h2>
+      <p>Отсканируйте QR-код камерой телефона</p>
+      <a href="dashboard.html?role=guest" class="qr-link">
+        <img src="images/qr.png" alt="QR-код" class="qr-image"
+             onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(location.origin + location.pathname.replace('index.html','dashboard.html'))">
+      </a>
+      <p class="hint">QR ведёт на этот же сайт, роль: гость</p>
+    </div>
+
+    <div class="divider">или</div>
+
+    <!-- Логин / пароль для админов -->
+    <div class="login-method">
+      <h2>🔐 Вход для администраторов</h2>
+      <form id="admin-login" autocomplete="off">
+        <input type="email"    id="email"    placeholder="Email"    required>
+        <input type="password" id="password" placeholder="Пароль"   required>
+        <button type="submit">Войти</button>
+      </form>
+      <p id="login-error" class="error"></p>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>
