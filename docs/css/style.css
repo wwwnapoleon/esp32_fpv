@@ -257,6 +257,14 @@ button[type=submit]:active,
   font-weight: 700;
   font-size: 17px;
   color: var(--green);
+  text-decoration: none;
+  transition: background 0.15s;
+  cursor: pointer;
+}
+.sidebar-header:hover {
+  background: var(--bg-3);
+  color: var(--green);
+  text-decoration: none;
 }
 .sidebar-header .logo-icon { font-size: 22px; }
 
