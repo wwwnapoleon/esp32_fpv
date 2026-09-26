@@ -5,8 +5,8 @@
 
 const CONFIG = {
   // Supabase
-  SUPABASE_URL: 'https://ВАШ-ПРОЕКТ.supabase.co',
-  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIs...ваш_anon_key',
+  SUPABASE_URL: 'https://database_eco_school.supabase.co',
+  SUPABASE_ANON_KEY: 'PvMMHvE3RQkNtTVcQCCzQ_rEpFx2HY',
 
   // ESP32 FPV камера
   // Если камера в той же сети, что и браузер — используй её IP
