@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Регистрация · ЭКО-ШКОЛА</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="login-page">
+  <div class="login-container">
+
+    <div class="logo-block">
+      <h1>🌿 ЭКО-ШКОЛА</h1>
+      <p class="subtitle">Регистрация ученика</p>
+    </div>
+
+    <form id="register-form" autocomplete="off">
+      <div class="input-group">
+        <label for="fio">ФИО</label>
+        <input type="text" id="fio" placeholder="Иванов Иван Иванович" required>
+      </div>
+
+      <div class="input-group">
+        <label for="class">Класс</label>
+        <input type="text" id="class" placeholder="8 А" required>
+      </div>
+
+      <div class="input-group">
+        <label for="color">Любимый цвет</label>
+        <input type="color" id="color" value="#2f81f7">
+      </div>
+
+      <button type="submit" class="btn-primary">📝 Зарегистрироваться</button>
+    </form>
+
+    <p id="register-status" class="error"></p>
+
+    <p class="footer-hint">
+      Уже зарегистрированы? <a href="login.html">Войти по QR</a>
+    </p>
+
+    <a href="index.html" class="btn-back">← На главную</a>
+  </div>
+
+  <script>
+    document.getElementById('register-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      var fio   = document.getElementById('fio').value.trim();
+      var cls   = document.getElementById('class').value.trim();
+      var color = document.getElementById('color').value;
+      var statusEl = document.getElementById('register-status');
+
+      statusEl.textContent = '⏳ Сохранение...';
+      statusEl.className = 'error';
+
+      var student = { fio: fio, class: cls, color: color, created: new Date().toISOString() };
+      var students = JSON.parse(localStorage.getItem('students') || '[]');
+      students.push(student);
+      localStorage.setItem('students', JSON.stringify(students));
+      console.log('Зарегистрирован ученик:', student);
+
+      statusEl.textContent = '✅ Спасибо, ' + fio + '! Вы зарегистрированы.';
+      statusEl.className = 'review-status success';
+
+      setTimeout(function() {
+        window.location.href = 'index.html';
+      }, 2000);
+    });
+  </script>
+</body>
+</html>
