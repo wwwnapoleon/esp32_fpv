@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Главная · ЭКО-ШКОЛА</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="dashboard-page">
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo-icon">🌱</span>
+      <span class="brand-name">ЭКО-ШКОЛА</span>
+    </div>
+    <div class="user-info">
+      <span id="user-role">…</span>
+      <button onclick="logout()" class="btn-logout">Выйти</button>
+    </div>
+  </header>
+
+  <main class="dashboard-main">
+    <h1>Главный экран</h1>
+    <p class="subtitle">Выберите раздел</p>
+
+    <div class="cards">
+
+      <!-- Функция 1: База данных -->
+      <a href="database.html" class="card">
+        <div class="card-icon">🗄️</div>
+        <h2>База данных</h2>
+        <p class="card-title">ЭКО-ШКОЛА</p>
+        <p class="card-desc">
+          Просмотр данных об экологических проектах школы.
+          <span class="read-only">Только чтение</span>
+        </p>
+      </a>
+
+      <!-- Функция 2: FPV камера -->
+      <a href="fpv.html" class="card">
+        <div class="card-icon">📹</div>
+        <h2>FPV камера</h2>
+        <p class="card-title">Прямой эфир</p>
+        <p class="card-desc">
+          Просмотр потока с камеры ESP32-S3 в реальном времени.
+          <span class="read-only">Только просмотр</span>
+        </p>
+      </a>
+
+    </div>
+
+    <!-- Блок для админов -->
+    <div class="admin-panel" id="admin-panel" style="display:none;">
+      <h2>⚙️ Панель администратора</h2>
+      <p>Вам доступны функции редактирования в разделах:</p>
+      <ul>
+        <li>✏️ Редактирование записей в «ЭКО-ШКОЛА»</li>
+        <li>🎛️ Управление серво камеры</li>
+        <li>👥 Управление пользователями</li>
+      </ul>
+    </div>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    const user = checkAccess();
+    if (user) {
+      document.getElementById('user-role').textContent =
+        user.role === 'admin' ? '👑 Администратор' : '👤 Гость';
+      if (user.role === 'admin') {
+        document.getElementById('admin-panel').style.display = 'block';
+      }
+    }
+  </script>
+</body>
+</html>
