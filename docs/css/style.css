@@ -1275,3 +1275,117 @@ details[open] .expand-arrow {
   transform: rotate(90deg);
   color: var(--green);
 }
+
+/* ============================================================
+   АНИМАЦИИ ПОЯВЛЕНИЯ ПРИ СКРОЛЛЕ
+   ============================================================ */
+
+/* ---------- Начальное состояние ---------- */
+.animate-on-scroll {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+/* ---------- Видимое состояние ---------- */
+.animate-on-scroll.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ---------- Задержки (каскад) ---------- */
+.animate-on-scroll.delay-1 { transition-delay: 0.1s; }
+.animate-on-scroll.delay-2 { transition-delay: 0.2s; }
+.animate-on-scroll.delay-3 { transition-delay: 0.3s; }
+.animate-on-scroll.delay-4 { transition-delay: 0.4s; }
+.animate-on-scroll.delay-5 { transition-delay: 0.5s; }
+.animate-on-scroll.delay-6 { transition-delay: 0.6s; }
+
+/* ---------- Дополнительные эффекты ---------- */
+
+/* Плавное появление слева */
+.animate-on-scroll.slide-left {
+  transform: translateX(-40px);
+}
+.animate-on-scroll.slide-left.visible {
+  transform: translateX(0);
+}
+
+/* Плавное появление справа */
+.animate-on-scroll.slide-right {
+  transform: translateX(40px);
+}
+.animate-on-scroll.slide-right.visible {
+  transform: translateX(0);
+}
+
+/* Плавное увеличение */
+.animate-on-scroll.zoom-in {
+  transform: scale(0.9);
+}
+.animate-on-scroll.zoom-in.visible {
+  transform: scale(1);
+}
+
+/* ---------- Hero: специальная анимация ---------- */
+.hero {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.hero.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ---------- Уважение к системным настройкам ---------- */
+/* Если у пользователя включено "уменьшить движение" — отключаем анимации */
+@media (prefers-reduced-motion: reduce) {
+  .animate-on-scroll,
+  .hero {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
+/* ---------- Плавное появление всей страницы ---------- */
+@keyframes pageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.content-area {
+  animation: pageFadeIn 0.4s ease-out;
+}
+
+/* ---------- Пульсация иконки логотипа ---------- */
+@keyframes logoPulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.1); }
+}
+
+.sidebar-header .logo-icon {
+  animation: logoPulse 4s ease-in-out infinite;
+  display: inline-block;
+}
+
+/* ---------- Эффект наведения на карточки (лёгкий) ---------- */
+.news-card,
+.team-card,
+.direction-card,
+.action-card,
+.blog-post {
+  transition:
+    border-color 0.2s,
+    transform 0.2s,
+    box-shadow 0.2s,
+    background 0.2s;
+}
