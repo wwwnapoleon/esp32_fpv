@@ -43,7 +43,12 @@ function attachPageHandlers(name) {
   const reviewForm = document.getElementById('review-form');
   if (reviewForm) reviewForm.addEventListener('submit', handleReviewSubmit);
 
-  // Перезапуск анимаций — через RAF, чтобы контент уже был в DOM
+  // Инициализация листьев на странице «Направления»
+  if (name === 'directions' && typeof window.initLeaves === 'function') {
+    window.initLeaves();
+  }
+
+  // Перезапуск анимаций
   if (typeof window.initScrollAnimations === 'function') {
     requestAnimationFrame(() => {
       window.initScrollAnimations();
