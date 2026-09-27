@@ -1060,3 +1060,77 @@ details[open] .expand-arrow {
   margin: 6px 0;
   line-height: 1.5;
 }
+
+/* ============================================================
+   Раскрывающиеся карточки акций
+   ============================================================ */
+
+details.action-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+details.action-card[open] {
+  border-color: var(--green);
+}
+details.action-card:hover {
+  border-color: var(--green);
+}
+
+.action-summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 22px 24px;
+  cursor: pointer;
+  list-style: none;
+  position: relative;
+  transition: background 0.15s;
+  user-select: none;
+}
+.action-summary::-webkit-details-marker { display: none; }
+.action-summary::marker { display: none; }
+.action-summary:hover {
+  background: rgba(63, 185, 80, 0.05);
+}
+
+.action-title-block { flex: 1; }
+.action-title-block h2 {
+  font-size: 17px;
+  margin: 0 0 4px;
+  color: var(--text);
+}
+.action-date {
+  font-size: 12px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.action-content {
+  padding: 0 24px 22px 84px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  padding-top: 18px;
+}
+.action-content p {
+  font-size: 14px;
+  line-height: 1.65;
+  margin: 10px 0;
+}
+.action-content .action-stats {
+  display: flex;
+  gap: 18px;
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--text-dim);
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+  .action-content { padding-left: 24px; }
+}
