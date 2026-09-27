@@ -952,30 +952,38 @@ button[type=submit]:active,
 }
 
 @media (min-width: 1024px) {
-  /* Меню скрыто по умолчанию, но при клике на бургер — открывается */
+  /* Меню скрыто, выезжает при клике на бургер */
   .sidebar {
     transform: translateX(-100%);
-    box-shadow: 4px 0 20px rgba(0,0,0,0.3);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 4px 0 30px rgba(0,0,0,0.35);
   }
   .sidebar.open {
     transform: translateX(0);
   }
-  .content { margin-left: 0; }
-  .sidebar-overlay { display: block; }
 
-  /* Бургер показываем и на десктопе */
-  .burger { display: flex; }
-
-  /* Когда меню открыто — сдвигаем контент */
+  /* Контент плавно сдвигается вправо */
+  .content {
+    margin-left: 0;
+    transition: margin-left 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
   body.menu-open .content {
     margin-left: 260px;
-    transition: margin-left 0.25s ease;
   }
-  body.menu-open .sidebar-overlay {
-    /* Не затемняем на десктопе — только сдвигаем */
-    background: transparent;
-    backdrop-filter: none;
-    pointer-events: auto;
+
+  /* Бургер показываем */
+  .burger { display: flex; }
+
+  /* Overlay на десктопе полностью отключаем */
+  .sidebar-overlay {
+    display: none !important;
+    background: transparent !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+  .sidebar-overlay.visible {
+    display: none !important;
+    opacity: 0 !important;
   }
 }
 
