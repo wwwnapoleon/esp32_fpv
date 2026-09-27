@@ -1,0 +1,555 @@
+/* ============================================================
+   ЭКО-ШКОЛА · REDESIGN
+   Фигуры, листья, крупная типографика в стиле Tilda
+   ============================================================ */
+
+/* ---------- Общие принципы редизайна ---------- */
+
+/* ============================================================
+   ШРИФТЫ — Manrope + JetBrains Mono
+   ============================================================ */
+
+/* Основной шрифт — Manrope */
+body,
+.hero h1,
+.big-title,
+.page h1,
+.page h2,
+.page h3,
+.page h4,
+button,
+input,
+textarea,
+.btn,
+.menu-item,
+.submenu-item {
+  font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Моноширинный для акцентов */
+.stat-number,
+.section-label,
+.hero-tagline,
+.news-date,
+.action-date,
+.post-date,
+.post-author,
+.quote-mark,
+.leaf-title,
+code, pre, kbd {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+}
+
+/* Заголовки — плотнее и строже */
+.hero h1,
+.page h1,
+.page h2 {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+/* Основной текст — чуть шире */
+body,
+.page p,
+.page .lead {
+  font-weight: 400;
+  letter-spacing: 0.005em;
+}
+
+/* Метки секций — моно + uppercase + tracking */
+.section-label {
+  font-weight: 500;
+  letter-spacing: 0.15em;
+}
+
+/* Цифры в статистике — моно + tabular */
+.stat-number {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+/* Крупная типографика */
+.hero h1,
+.big-title {
+  font-size: clamp(36px, 5.5vw, 64px);
+  line-height: 1.05;
+  letter-spacing: -1.5px;
+  font-weight: 700;
+  text-transform: lowercase;
+}
+
+/* Скобки-акценты для секций */
+.section-label {
+  display: inline-block;
+  font-size: 12px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  margin-bottom: 20px;
+  font-weight: 500;
+  transition: color 0.3s;
+}
+.section-label::before { content: '( '; color: var(--green); }
+.section-label::after  { content: ' )'; color: var(--green); }
+.section-label:hover { color: var(--green); }
+
+/* ============================================================
+   БЛОК СТАТИСТИКИ (как у Виктора)
+   ============================================================ */
+
+.stats-section {
+  margin: 60px 0;
+  padding: 0;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 18px;
+}
+
+.stat-card {
+  text-align: center;
+  padding: 28px 16px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(63,185,80,0.15), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.stat-card:hover {
+  border-color: var(--green);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(63,185,80,0.15);
+}
+.stat-card:hover::before { opacity: 1; }
+
+.stat-number {
+  font-size: clamp(36px, 4vw, 52px);
+  font-weight: 700;
+  color: var(--green);
+  line-height: 1;
+  margin-bottom: 10px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -1px;
+  position: relative;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.4;
+  position: relative;
+}
+
+/* ============================================================
+   ЦИТАТА-РАЗДЕЛИТЕЛЬ
+   ============================================================ */
+
+.quote-section {
+  margin: 70px 0;
+  padding: 50px 30px;
+  text-align: center;
+  background:
+    linear-gradient(135deg, rgba(63,185,80,0.1), rgba(46,160,67,0.04)),
+    var(--bg-2);
+  border: 1px solid var(--green-dim);
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.quote-section::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -10%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(63,185,80,0.15), transparent 70%);
+  pointer-events: none;
+}
+
+.quote-mark {
+  font-size: 22px;
+  color: var(--green);
+  margin-bottom: 20px;
+  letter-spacing: 3px;
+  font-weight: 500;
+  position: relative;
+}
+
+.quote-section blockquote {
+  font-size: clamp(18px, 2.2vw, 24px);
+  line-height: 1.5;
+  color: var(--text);
+  font-weight: 400;
+  max-width: 700px;
+  margin: 0 auto;
+  font-style: italic;
+  position: relative;
+}
+
+.quote-section blockquote::before,
+.quote-section blockquote::after {
+  color: var(--green);
+  font-size: 1.3em;
+  opacity: 0.5;
+}
+.quote-section blockquote::before { content: '« '; }
+.quote-section blockquote::after  { content: ' »'; }
+
+/* ============================================================
+   ЛИСТЬЯ-НАПРАВЛЕНИЯ
+   ============================================================ */
+
+.leaves-section {
+  margin: 60px 0;
+}
+
+.leaves-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 24px;
+  padding: 20px 0;
+}
+
+/* ---------- Базовый лист ---------- */
+.leaf {
+  position: relative;
+  aspect-ratio: 1;
+  cursor: pointer;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.leaf:hover {
+  transform: scale(1.15) rotate(3deg);
+  z-index: 10;
+}
+
+/* Улучшенный лист — с тенью и подсветкой */
+.leaf svg {
+  filter:
+    drop-shadow(0 10px 25px rgba(63, 185, 80, 0.2))
+    drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+  transition: filter 0.4s, transform 0.4s;
+}
+
+.leaf:hover svg {
+  filter:
+    drop-shadow(0 20px 50px rgba(63, 185, 80, 0.5))
+    drop-shadow(0 8px 16px rgba(0,0,0,0.25));
+}
+
+/* Лёгкое покачивание листьев */
+@keyframes leafSway {
+  0%, 100% { transform: rotate(-1deg); }
+  50%      { transform: rotate(1deg); }
+}
+
+.leaf svg {
+  animation: leafSway 6s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+.leaf:nth-child(2n) svg { animation-duration: 8s; animation-delay: -2s; }
+.leaf:nth-child(3n) svg { animation-duration: 7s; animation-delay: -4s; }
+.leaf:nth-child(5n) svg { animation-duration: 9s; animation-delay: -1s; }
+
+/* ---------- SVG-лист ---------- */
+.leaf svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: drop-shadow(0 8px 20px rgba(63,185,80,0.15));
+  transition: filter 0.4s;
+}
+
+.leaf:hover svg {
+  filter: drop-shadow(0 16px 40px rgba(63,185,80,0.4));
+}
+
+/* ---------- Контент внутри листа ---------- */
+.leaf-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 22%;
+  text-align: center;
+  pointer-events: none;
+}
+
+.leaf-icon {
+  font-size: 32px;
+  margin-bottom: 6px;
+  transition: transform 0.4s;
+}
+
+.leaf:hover .leaf-icon {
+  transform: scale(1.2) rotate(-8deg);
+}
+
+.leaf-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0d1117;   /* тёмный текст на светлом листе */
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ---------- Варианты листьев ---------- */
+.leaf--1 svg path { fill: #3fb950; }
+.leaf--2 svg path { fill: #2ea043; }
+.leaf--3 svg path { fill: #56d364; }
+.leaf--4 svg path { fill: #4ac26b; }
+.leaf--5 svg path { fill: #6fdd8b; }
+.leaf--6 svg path { fill: #2ea043; }
+
+/* ---------- Раскрытая карточка (модалка) ---------- */
+.leaf-expanded {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(6px);
+  z-index: 999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.3s ease;
+}
+.leaf-expanded.open {
+  display: flex;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.leaf-expanded-card {
+  background: var(--bg-2);
+  border: 1px solid var(--green);
+  border-radius: 20px;
+  padding: 32px;
+  max-width: 640px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.leaf-expanded-card h2 {
+  font-size: 24px;
+  color: var(--green);
+  margin: 0 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.leaf-expanded-card h4 {
+  font-size: 12px;
+  color: var(--green);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 20px 0 8px;
+}
+
+.leaf-expanded-card p {
+  font-size: 15px;
+  line-height: 1.7;
+  margin: 10px 0;
+}
+
+.leaf-expanded-card ul {
+  padding-left: 22px;
+  margin: 8px 0;
+}
+.leaf-expanded-card li {
+  font-size: 14px;
+  color: var(--text-dim);
+  margin: 6px 0;
+  line-height: 1.6;
+}
+
+.close-leaf {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s;
+}
+.close-leaf:hover {
+  background: var(--green);
+  color: #fff;
+  border-color: var(--green);
+}
+
+/* ============================================================
+   КРУПНЫЙ HERO (переработка)
+   ============================================================ */
+
+.hero--big {
+  padding: 60px 40px;
+  background:
+    radial-gradient(circle at 80% 20%, rgba(63,185,80,0.15), transparent 50%),
+    radial-gradient(circle at 20% 80%, rgba(47,129,247,0.08), transparent 50%),
+    var(--bg-2);
+  border: 1px solid var(--green-dim);
+  border-radius: 24px;
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero--big::before {
+  content: '';
+  position: absolute;
+  top: -100px;
+  right: -100px;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(63,185,80,0.12), transparent 70%);
+  pointer-events: none;
+  animation: float 8s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0); }
+  50%      { transform: translate(-20px, 20px); }
+}
+
+.hero--big .hero-tagline {
+  font-size: 14px;
+  color: var(--green);
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  margin-bottom: 24px;
+  font-weight: 600;
+}
+
+.hero--big h1 {
+  font-size: clamp(38px, 6vw, 72px);
+  line-height: 1.02;
+  letter-spacing: -2px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 24px;
+  text-transform: lowercase;
+  position: relative;
+}
+
+.hero--big h1 em {
+  color: var(--green);
+  font-style: normal;
+  font-weight: 800;
+}
+
+.hero--big .lead {
+  font-size: clamp(15px, 1.5vw, 18px);
+  color: var(--text-dim);
+  max-width: 560px;
+  line-height: 1.6;
+  margin-bottom: 32px;
+  position: relative;
+}
+
+.hero--big .hero-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  position: relative;
+}
+
+/* ============================================================
+   ПЛАВАЮЩИЕ ЛИСТЬЯ НА ФОНЕ
+   ============================================================ */
+
+.floating-leaves {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.floating-leaf {
+  position: absolute;
+  font-size: 24px;
+  opacity: 0.06;
+  animation: floatLeaf 20s linear infinite;
+  user-select: none;
+}
+
+.floating-leaf:nth-child(1) { left: 5%;  animation-delay: 0s;   animation-duration: 22s; }
+.floating-leaf:nth-child(2) { left: 20%; animation-delay: 3s;   animation-duration: 28s; font-size: 18px; }
+.floating-leaf:nth-child(3) { left: 45%; animation-delay: 6s;   animation-duration: 24s; font-size: 32px; }
+.floating-leaf:nth-child(4) { left: 65%; animation-delay: 2s;   animation-duration: 30s; }
+.floating-leaf:nth-child(5) { left: 85%; animation-delay: 8s;   animation-duration: 26s; font-size: 20px; }
+
+@keyframes floatLeaf {
+  0% {
+    top: 110%;
+    transform: translateX(0) rotate(0deg);
+  }
+  100% {
+    top: -10%;
+    transform: translateX(50px) rotate(360deg);
+  }
+}
+
+/* ============================================================
+   АДАПТИВНОСТЬ
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .hero--big {
+    padding: 40px 24px;
+  }
+  .leaves-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+  }
+  .leaf-title { font-size: 11px; }
+  .leaf-icon { font-size: 26px; }
+  .quote-section { padding: 36px 22px; }
+  .stat-card { padding: 20px 12px; }
+  .leaf-expanded-card { padding: 24px; }
+}
