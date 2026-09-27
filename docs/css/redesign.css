@@ -243,6 +243,35 @@ body,
   z-index: 10;
 }
 
+/* Улучшенный лист — с тенью и подсветкой */
+.leaf svg {
+  filter:
+    drop-shadow(0 10px 25px rgba(63, 185, 80, 0.2))
+    drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+  transition: filter 0.4s, transform 0.4s;
+}
+
+.leaf:hover svg {
+  filter:
+    drop-shadow(0 20px 50px rgba(63, 185, 80, 0.5))
+    drop-shadow(0 8px 16px rgba(0,0,0,0.25));
+}
+
+/* Лёгкое покачивание листьев */
+@keyframes leafSway {
+  0%, 100% { transform: rotate(-1deg); }
+  50%      { transform: rotate(1deg); }
+}
+
+.leaf svg {
+  animation: leafSway 6s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+.leaf:nth-child(2n) svg { animation-duration: 8s; animation-delay: -2s; }
+.leaf:nth-child(3n) svg { animation-duration: 7s; animation-delay: -4s; }
+.leaf:nth-child(5n) svg { animation-duration: 9s; animation-delay: -1s; }
+
 /* ---------- SVG-лист ---------- */
 .leaf svg {
   width: 100%;
