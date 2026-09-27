@@ -41,6 +41,16 @@
     { selector: '.review-section',    type: 'default', cascade: false },
     { selector: '.cta-section',       type: 'default', cascade: false },
 
+    // Формы входа / регистрации
+    { selector: '.login-container .logo-block', type: 'default', cascade: false },
+    { selector: '.login-container .login-method', type: 'default', cascade: true },
+    { selector: '.login-container .divider', type: 'default', cascade: false },
+    { selector: '.login-container .input-group', type: 'default', cascade: true },
+    { selector: '.login-container .btn-primary', type: 'default', cascade: false },
+    { selector: '.login-container .footer-hint', type: 'default', cascade: false },
+    { selector: '.login-container .btn-back', type: 'default', cascade: false },
+    { selector: '.login-container .qr-link', type: 'default', cascade: false },
+
     // Заголовки
     { selector: '.page h1',           type: 'default', cascade: false },
     { selector: '.page > .lead',      type: 'default', cascade: false },
