@@ -39,8 +39,14 @@ async function loadPage(name) {
 }
 
 function attachPageHandlers(name) {
+  // Форма отзыва в ЖИЗЕ
   const reviewForm = document.getElementById('review-form');
   if (reviewForm) reviewForm.addEventListener('submit', handleReviewSubmit);
+
+  // Анимации при прокрутке — перезапуск для нового контента
+  if (typeof window.initScrollAnimations === 'function') {
+    window.initScrollAnimations();
+  }
 }
 
 function handleReviewSubmit(e) {
