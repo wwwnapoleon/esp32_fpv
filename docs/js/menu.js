@@ -47,3 +47,33 @@ document.querySelectorAll('.submenu-item').forEach(link => {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeMenu();
 });
+
+// ============================================================
+//  Автоскрытие бокового меню на десктопе
+//  Если курсор уходит с меню — плашка закрывается
+// ============================================================
+
+// Работает только на десктопе (ширина ≥ 1024px)
+const isDesktop = () => window.innerWidth >= 1024;
+
+// Если меню открыто и курсор ушёл с него — закрываем через 600мс
+let autoCloseTimer = null;
+
+sidebar?.addEventListener('mouseleave', () => {
+  if (!isDesktop()) return;                 // на мобильном — не трогаем
+  if (!sidebar.classList.contains('open')) return;  // если закрыто — ничего
+
+  // Небольшая задержка — чтобы не закрывать, если курсор
+  // случайно «чиркнул» по краю
+  autoCloseTimer = setTimeout(() => {
+    closeMenu();
+  }, 600);
+});
+
+// Если курсор вернулся — отменяем закрытие
+sidebar?.addEventListener('mouseenter', () => {
+  if (autoCloseTimer) {
+    clearTimeout(autoCloseTimer);
+    autoCloseTimer = null;
+  }
+});
