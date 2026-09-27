@@ -957,3 +957,106 @@ button[type=submit]:active,
   .burger { display: none; }
   .sidebar-overlay { display: none; }
 }
+
+/* ============================================================
+   Раскрывающиеся карточки направлений (details/summary)
+   ============================================================ */
+
+details.direction-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+details.direction-card[open] {
+  border-color: var(--green);
+}
+details.direction-card:hover {
+  border-color: var(--green);
+}
+
+.direction-summary {
+  display: block;
+  padding: 22px 24px;
+  cursor: pointer;
+  list-style: none;
+  position: relative;
+  transition: background 0.15s;
+  user-select: none;
+}
+.direction-summary::-webkit-details-marker { display: none; }
+.direction-summary::marker { display: none; }
+
+.direction-summary:hover {
+  background: rgba(63, 185, 80, 0.05);
+}
+
+.direction-summary .direction-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.direction-summary h2 {
+  font-size: 18px;
+  margin: 0 0 6px;
+  color: var(--text);
+  padding-right: 30px;
+}
+
+.direction-brief {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin: 0;
+  line-height: 1.5;
+  padding-right: 30px;
+}
+
+.expand-arrow {
+  position: absolute;
+  top: 24px;
+  right: 22px;
+  font-size: 14px;
+  color: var(--text-dim);
+  transition: transform 0.25s;
+}
+details[open] .expand-arrow {
+  transform: rotate(90deg);
+  color: var(--green);
+}
+
+.direction-content {
+  padding: 0 24px 22px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  padding-top: 18px;
+}
+
+.direction-content h4 {
+  font-size: 12px;
+  margin: 16px 0 8px;
+  color: var(--green);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+.direction-content h4:first-child { margin-top: 0; }
+
+.direction-content p {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.65;
+  margin: 10px 0;
+}
+
+.direction-content ul {
+  padding-left: 20px;
+  margin: 8px 0;
+}
+.direction-content li {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin: 6px 0;
+  line-height: 1.5;
+}
