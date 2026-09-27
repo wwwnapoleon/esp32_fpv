@@ -1389,3 +1389,26 @@ details[open] .expand-arrow {
     box-shadow 0.2s,
     background 0.2s;
 }
+
+/* Плавное раскрытие details */
+details .direction-content,
+details .action-content,
+details .post-content {
+  animation: expandContent 0.3s ease-out;
+}
+
+@keyframes expandContent {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Стрелка плавно поворачивается */
+.expand-arrow {
+  transition: transform 0.25s ease;
+}
