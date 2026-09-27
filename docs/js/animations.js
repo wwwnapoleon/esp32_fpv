@@ -1,6 +1,8 @@
 // ============================================================
 //  Анимации появления блоков при скролле
 //  Используется IntersectionObserver — без библиотек
+//  Работает и при первой загрузке, и после динамической
+//  подгрузки контента (pages.js)
 // ============================================================
 
 (function() {
@@ -8,22 +10,19 @@
 
   // Проверка поддержки
   if (!('IntersectionObserver' in window)) {
-    // Старый браузер — просто показываем всё сразу
     document.querySelectorAll('.animate-on-scroll, .hero').forEach(el => {
       el.classList.add('visible');
     });
     return;
   }
 
-  // ---------- Настройки ----------
   const OBSERVER_OPTIONS = {
-    root: null,               // наблюдать относительно окна
-    rootMargin: '0px 0px -50px 0px',  // сработает чуть раньше, чем элемент полностью в кадре
-    threshold: 0.1            // достаточно 10% видимости
+    root: null,
+    rootMargin: '0px 0px -30px 0px',
+    threshold: 0.05
   };
 
-  // ---------- Что анимировать ----------
-  // Все элементы, которым нужно плавное появление
+  // Что анимировать
   const SELECTORS = [
     '.hero',
     '.news-card',
@@ -38,56 +37,56 @@
     '.page h1',
     '.page > .lead',
     '.page h2'
-  ];
+  ].join(', ');
 
-  // ---------- Пометить элементы ----------
-  function markElements() {
-    const selector = SELECTORS.join(', ');
-    document.querySelectorAll(selector).forEach((el, index) => {
-      // Пропустить, если уже помечен
-      if (el.classList.contains('animate-on-scroll')) return;
-      if (el.tagName === 'DETAILS') {
-        // details нельзя трансформировать — иначе ломается раскрытие
-        // анимируем только при появлении, добавляя visible
-      }
-
-      el.classList.add('animate-on-scroll');
-
-      // Каскадная задержка (1-6)
-      const delay = (index % 6) + 1;
-      el.classList.add('delay-' + delay);
-    });
-  }
-
-  // ---------- Наблюдатель ----------
+  // Один глобальный observer — наблюдаем все элементы
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         entry.target.classList.add('visible');
-        observer.unobserve(entry.target);   // анимируем один раз
+        observer.unobserve(entry.target);
       }
     });
   }, OBSERVER_OPTIONS);
 
-  // ---------- Запустить ----------
-  function observeAll() {
-    document.querySelectorAll('.animate-on-scroll').forEach(el => {
+  // Пометить элементы + сразу проверить видимость
+  function markAndObserve() {
+    document.querySelectorAll(SELECTORS).forEach((el, index) => {
+      if (el.classList.contains('animate-on-scroll')) return;
+
+      el.classList.add('animate-on-scroll');
+
+      // Каскадная задержка
+      const delay = (index % 6) + 1;
+      el.classList.add('delay-' + delay);
+
+      // Наблюдать
       observer.observe(el);
+
+      // Если элемент уже в зоне видимости — сразу видимый
+      const rect = el.getBoundingClientRect();
+      const inView = rect.top < window.innerHeight && rect.bottom > 0;
+      if (inView) {
+        // Задержка, чтобы дать браузеру отрисовать начальное состояние
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            el.classList.add('visible');
+          });
+        });
+      }
     });
   }
 
-  // ---------- Экспорт для использования из pages.js ----------
+  // Экспорт
   window.initScrollAnimations = function() {
-    markElements();
-    observeAll();
+    markAndObserve();
   };
 
-  // ---------- Первичная инициализация ----------
+  // Первичный запуск
   document.addEventListener('DOMContentLoaded', () => {
-    // Небольшая задержка, чтобы контент успел загрузиться
     setTimeout(() => {
       window.initScrollAnimations();
-    }, 100);
+    }, 50);
   });
 
 })();
