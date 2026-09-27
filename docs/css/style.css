@@ -952,10 +952,31 @@ button[type=submit]:active,
 }
 
 @media (min-width: 1024px) {
-  .sidebar { transform: translateX(0); box-shadow: none; }
-  .content { margin-left: 260px; }
-  .burger { display: none; }
-  .sidebar-overlay { display: none; }
+  /* Меню скрыто по умолчанию, но при клике на бургер — открывается */
+  .sidebar {
+    transform: translateX(-100%);
+    box-shadow: 4px 0 20px rgba(0,0,0,0.3);
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  .content { margin-left: 0; }
+  .sidebar-overlay { display: block; }
+
+  /* Бургер показываем и на десктопе */
+  .burger { display: flex; }
+
+  /* Когда меню открыто — сдвигаем контент */
+  body.menu-open .content {
+    margin-left: 260px;
+    transition: margin-left 0.25s ease;
+  }
+  body.menu-open .sidebar-overlay {
+    /* Не затемняем на десктопе — только сдвигаем */
+    background: transparent;
+    backdrop-filter: none;
+    pointer-events: auto;
+  }
 }
 
 /* ============================================================
