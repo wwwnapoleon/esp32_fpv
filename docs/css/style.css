@@ -1134,3 +1134,123 @@ details.action-card:hover {
 @media (max-width: 600px) {
   .action-content { padding-left: 24px; }
 }
+
+/* ============================================================
+   Раскрывающиеся посты блога
+   ============================================================ */
+
+details.blog-post {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+details.blog-post[open] {
+  border-color: var(--green);
+}
+details.blog-post:hover {
+  border-color: var(--green);
+}
+
+.post-summary {
+  padding: 22px 24px;
+  cursor: pointer;
+  list-style: none;
+  position: relative;
+  transition: background 0.15s;
+  user-select: none;
+}
+.post-summary::-webkit-details-marker { display: none; }
+.post-summary::marker { display: none; }
+.post-summary:hover {
+  background: rgba(63, 185, 80, 0.05);
+}
+
+.post-summary .post-meta {
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.post-summary .post-author {
+  color: var(--green);
+  font-weight: 600;
+}
+
+.post-summary h2 {
+  font-size: 18px;
+  margin: 0 0 8px;
+  color: var(--text);
+  line-height: 1.4;
+  padding-right: 30px;
+}
+
+.post-brief {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin: 0;
+  line-height: 1.5;
+  padding-right: 30px;
+}
+
+.post-content {
+  padding: 18px 24px 22px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+.post-content p {
+  font-size: 14px;
+  line-height: 1.7;
+  margin: 12px 0;
+  color: var(--text);
+}
+.post-content h4 {
+  font-size: 12px;
+  margin: 16px 0 8px;
+  color: var(--green);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+.post-content ul {
+  padding-left: 20px;
+  margin: 8px 0;
+}
+.post-content li {
+  font-size: 14px;
+  color: var(--text);
+  margin: 6px 0;
+  line-height: 1.55;
+}
+.post-content .post-tags {
+  display: flex;
+  gap: 6px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+.post-content .post-tags span {
+  font-size: 11px;
+  color: var(--green);
+  background: rgba(63, 185, 80, 0.12);
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+/* Стрелка раскрытия — общая для всех details */
+.expand-arrow {
+  position: absolute;
+  top: 26px;
+  right: 22px;
+  font-size: 14px;
+  color: var(--text-dim);
+  transition: transform 0.25s;
+  pointer-events: none;
+}
+details[open] .expand-arrow {
+  transform: rotate(90deg);
+  color: var(--green);
+}
