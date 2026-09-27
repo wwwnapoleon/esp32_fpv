@@ -5,6 +5,70 @@
 
 /* ---------- Общие принципы редизайна ---------- */
 
+/* ============================================================
+   ШРИФТЫ — Manrope + JetBrains Mono
+   ============================================================ */
+
+/* Основной шрифт — Manrope */
+body,
+.hero h1,
+.big-title,
+.page h1,
+.page h2,
+.page h3,
+.page h4,
+button,
+input,
+textarea,
+.btn,
+.menu-item,
+.submenu-item {
+  font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Моноширинный для акцентов */
+.stat-number,
+.section-label,
+.hero-tagline,
+.news-date,
+.action-date,
+.post-date,
+.post-author,
+.quote-mark,
+.leaf-title,
+code, pre, kbd {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+}
+
+/* Заголовки — плотнее и строже */
+.hero h1,
+.page h1,
+.page h2 {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+/* Основной текст — чуть шире */
+body,
+.page p,
+.page .lead {
+  font-weight: 400;
+  letter-spacing: 0.005em;
+}
+
+/* Метки секций — моно + uppercase + tracking */
+.section-label {
+  font-weight: 500;
+  letter-spacing: 0.15em;
+}
+
+/* Цифры в статистике — моно + tabular */
+.stat-number {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
 /* Крупная типографика */
 .hero h1,
 .big-title {
