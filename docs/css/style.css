@@ -1420,3 +1420,92 @@ details .post-content {
 .expand-arrow {
   transition: transform 0.25s ease;
 }
+
+
+/* ============================================================
+   РАСШИРЕННЫЕ АНИМАЦИИ — для всех блоков
+   ============================================================ */
+
+/* ---------- Гарантируем, что все animated-элементы невидимы изначально ---------- */
+.animate-on-scroll {
+  opacity: 0;
+  transform: translateY(30px);
+  transition:
+    opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+.animate-on-scroll.visible {
+  opacity: 1;
+  transform: translateY(0);
+  will-change: auto;
+}
+
+/* ---------- Внутри раскрытых карточек: элементы появляются с меньшим сдвигом ---------- */
+.direction-content > .animate-on-scroll,
+.action-content > .animate-on-scroll,
+.post-content > .animate-on-scroll {
+  transform: translateY(15px);
+}
+
+.direction-content > .animate-on-scroll.visible,
+.action-content > .animate-on-scroll.visible,
+.post-content > .animate-on-scroll.visible {
+  transform: translateY(0);
+}
+
+/* ---------- Формы: input-group появляются со сдвигом вправо ---------- */
+.input-group.animate-on-scroll {
+  transform: translateX(-20px);
+}
+.input-group.animate-on-scroll.visible {
+  transform: translateX(0);
+}
+
+/* ---------- Кнопки: чуть увеличиваются ---------- */
+.hero-actions .btn.animate-on-scroll {
+  transform: scale(0.95);
+}
+.hero-actions .btn.animate-on-scroll.visible {
+  transform: scale(1);
+}
+
+/* ---------- Заголовки: появляются сверху вниз ---------- */
+.page h1.animate-on-scroll,
+.page h2.animate-on-scroll,
+.page h3.animate-on-scroll,
+.page h4.animate-on-scroll,
+.page > .lead.animate-on-scroll {
+  transform: translateY(20px);
+}
+.page h1.animate-on-scroll.visible,
+.page h2.animate-on-scroll.visible,
+.page h3.animate-on-scroll.visible,
+.page h4.animate-on-scroll.visible,
+.page > .lead.animate-on-scroll.visible {
+  transform: translateY(0);
+}
+
+/* ---------- `summary` в details — без transform, чтобы не ломать раскрытие ---------- */
+details.direction-card > summary.animate-on-scroll,
+details.action-card > summary.animate-on-scroll,
+details.blog-post > summary.animate-on-scroll {
+  transform: translateY(15px);
+}
+details.direction-card > summary.animate-on-scroll.visible,
+details.action-card > summary.animate-on-scroll.visible,
+details.blog-post > summary.animate-on-scroll.visible {
+  transform: translateY(0);
+}
+
+/* ---------- Уважение к настройкам пользователя ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .animate-on-scroll,
+  .animate-on-scroll.visible,
+  .hero {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
