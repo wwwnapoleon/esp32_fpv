@@ -5,38 +5,52 @@
 const user = checkAccess();
 const isAdmin = user && user.role === 'admin';
 
-document.getElementById('user-role').textContent =
-  isAdmin ? '👑 Админ' : '👤 Гость';
+const roleEl = document.getElementById('user-role');
+if (roleEl) roleEl.textContent = isAdmin ? '👑 Админ' : '👤 Гость';
 
+// Показать управление серво для админов
 if (isAdmin) {
   document.getElementById('servo-controls').style.display = 'block';
 }
 
-// ---- Поток ----
+// ---- Элементы ----
 const streamEl = document.getElementById('stream');
 const overlay  = document.getElementById('status-overlay');
 
+// ---- Подключение потока ----
 function connectStream() {
-  overlay.textContent = 'Подключение к ' + CONFIG.FPV_STREAM_URL + '...';
-  overlay.style.display = 'block';
+  overlay.style.display = 'flex';
+  overlay.textContent = '⏳ Подключение к ' + CONFIG.FPV_STREAM_URL + '...';
 
-  streamEl.onload = () => {
+  const url = CONFIG.FPV_STREAM_URL + '?t=' + Date.now();
+
+  const test = new Image();
+  test.onload = () => {
+    streamEl.src = url;
     overlay.style.display = 'none';
   };
-  streamEl.onerror = () => {
+  test.onerror = () => {
     overlay.textContent =
-      '❌ Не удалось подключиться к камере.\n' +
-      'Проверь, что ты в Wi-Fi сети ESP32-FPV и адрес верный: ' +
-      CONFIG.FPV_STREAM_URL;
+      '❌ Не удалось подключиться к камере.\n\n' +
+      'Проверь:\n' +
+      '1. Ты подключён к Wi-Fi «ESP32-FPV» (пароль: 12345678)\n' +
+      '2. Адрес верный: ' + CONFIG.FPV_STREAM_URL + '\n' +
+      '3. Плата ESP32 включена и работает';
   };
-  streamEl.src = CONFIG.FPV_STREAM_URL + '?t=' + Date.now();
+  test.src = url;
 }
 
-document.getElementById('connect').addEventListener('click', connectStream);
+// ---- Отключение ----
+function disconnectStream() {
+  streamEl.src = '';
+  overlay.style.display = 'flex';
+  overlay.textContent = '⏹️ Отключено';
+}
 
-document.getElementById('snapshot').addEventListener('click', async () => {
+// ---- Снимок ----
+async function takeSnapshot() {
   try {
-    const res = await fetch(CONFIG.FPV_SNAPSHOT_URL);
+    const res = await fetch(CONFIG.FPV_SNAPSHOT_URL + '?t=' + Date.now());
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -47,31 +61,33 @@ document.getElementById('snapshot').addEventListener('click', async () => {
   } catch (e) {
     alert('Не удалось сделать снимок: ' + e.message);
   }
-});
+}
 
 // ---- FPS / статус ----
 setInterval(async () => {
   try {
-    const res = await fetch(CONFIG.FPV_STATUS_URL);
+    const res = await fetch(CONFIG.FPV_STATUS_URL + '?t=' + Date.now());
     const j = await res.json();
-    document.getElementById('fps-info').textContent = 'FPS: ' + j.fps;
+    const el = document.getElementById('fps-info');
+    if (el) el.textContent = 'FPS: ' + j.fps;
   } catch (e) {
-    document.getElementById('fps-info').textContent = 'FPS: —';
+    const el = document.getElementById('fps-info');
+    if (el) el.textContent = 'FPS: —';
   }
 }, 2000);
 
 // ---- Управление серво (только админ) ----
 if (isAdmin) {
-  const pan  = document.getElementById('pan');
-  const tilt = document.getElementById('tilt');
-  const panVal  = document.getElementById('pan-val');
-  const tiltVal = document.getElementById('tilt-val');
+  const pan   = document.getElementById('pan');
+  const tilt  = document.getElementById('tilt');
+  const panV  = document.getElementById('pan-val');
+  const tiltV = document.getElementById('tilt-val');
 
   let timer = null;
 
   function sendServo() {
-    panVal.textContent  = pan.value + '°';
-    tiltVal.textContent = tilt.value + '°';
+    panV.textContent  = pan.value + '°';
+    tiltV.textContent = tilt.value + '°';
 
     if (timer) return;
     timer = setTimeout(() => {
@@ -81,9 +97,14 @@ if (isAdmin) {
     }, 80);
   }
 
-  pan.addEventListener('input', sendServo);
-  tilt.addEventListener('input', sendServo);
+  pan?.addEventListener('input', sendServo);
+  tilt?.addEventListener('input', sendServo);
 }
 
-// Автозапуск
+// ---- Кнопки ----
+document.getElementById('connect')?.addEventListener('click', connectStream);
+document.getElementById('disconnect')?.addEventListener('click', disconnectStream);
+document.getElementById('snapshot')?.addEventListener('click', takeSnapshot);
+
+// ---- Автозапуск ----
 connectStream();
