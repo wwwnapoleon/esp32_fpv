@@ -297,8 +297,9 @@ esp_err_t status_handler(httpd_req_t *req) {
 
 void startServer() {
   httpd_config_t cfg = HTTPD_DEFAULT_CONFIG();
-  cfg.max_uri_handlers = 8;
-  cfg.server_port      = 80;
+  cfg.server_port = 8080;      // ← было 80, стало 8080
+  cfg.max_uri_handlers = 10;
+  cfg.ctrl_port = 32769;
 
   if (httpd_start(&server, &cfg) == ESP_OK) {
     httpd_uri_t uri_index   = { "/",         HTTP_GET, index_handler,   NULL };
