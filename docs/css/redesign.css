@@ -137,6 +137,16 @@ body,
 }
 .stat-card:hover::before { opacity: 1; }
 
+.news-card, .team-card, .stat-card {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s, transform 0.5s;
+}
+.news-card.visible, .team-card.visible, .stat-card.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .stat-number {
   font-size: clamp(36px, 4vw, 52px);
   font-weight: 700;
