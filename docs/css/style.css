@@ -1701,3 +1701,14 @@ details.blog-post > summary.animate-on-scroll.visible {
   .hero-image { max-width: 80px; max-height: 80px; }
   .hero-placeholder { font-size: 48px; }
 }
+
+
+/* ============================================================
+   Счётчик статистики — плавность
+   ============================================================ */
+
+.stat-value {
+  font-variant-numeric: tabular-nums;    /* цифры одной ширины */
+  min-height: 1em;
+  display: inline-block;
+}
