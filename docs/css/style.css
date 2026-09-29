@@ -988,7 +988,7 @@ button[type=submit]:active,
 }
 
 /* ============================================================
-   Раскрывающиеся карточки направлений (details/summary)
+   Раскрывающиеся карточки направлений
    ============================================================ */
 
 details.direction-card {
@@ -1016,27 +1016,46 @@ details.direction-card:hover {
 }
 .direction-summary::-webkit-details-marker { display: none; }
 .direction-summary::marker { display: none; }
-
 .direction-summary:hover {
   background: rgba(63, 185, 80, 0.05);
 }
 
+/* Иконка — в зелёном квадрате */
 .direction-summary .direction-icon {
-  font-size: 32px;
-  margin-bottom: 8px;
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  font-size: 28px;
+  line-height: 1;
+  margin: 0 0 14px;
+  background: rgba(63, 185, 80, 0.15);
+  border: 2px solid var(--green);
+  border-radius: 12px;
+  transition: background 0.2s, transform 0.2s;
+}
+.direction-summary:hover .direction-icon {
+  background: rgba(63, 185, 80, 0.25);
+  transform: scale(1.05);
 }
 
+/* Заголовок — белый, жирный, с тенью */
 .direction-summary h2 {
-  font-size: 18px;
+  font-size: 17px;
   margin: 0 0 6px;
-  color: var(--text);
+  color: #ffffff;
   padding-right: 30px;
+  line-height: 1.3;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 .direction-brief {
   font-size: 13px;
-  color: var(--text-dim);
+  color: var(--text);
+  opacity: 0.75;
   margin: 0;
   line-height: 1.5;
   padding-right: 30px;
@@ -1049,6 +1068,7 @@ details.direction-card:hover {
   font-size: 14px;
   color: var(--text-dim);
   transition: transform 0.25s;
+  pointer-events: none;
 }
 details[open] .expand-arrow {
   transform: rotate(90deg);
@@ -1068,31 +1088,30 @@ details[open] .expand-arrow {
   color: var(--green);
   text-transform: uppercase;
   letter-spacing: 1px;
-  font-weight: 600;
-}
-.direction-content h4 {
-  font-size: 12px;
-  margin: 16px 0 8px;
-  color: var(--green);           /* зелёный — хорошо видно */
-  text-transform: uppercase;
-  letter-spacing: 1px;
   font-weight: 700;
+}
+.direction-content h4:first-child { margin-top: 0; }
+
+.direction-content p {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.65;
+  margin: 10px 0;
 }
 
 .direction-content ul {
   padding-left: 20px;
   margin: 8px 0;
 }
-
 .direction-content li {
-  font-size: 14px;               /* было 13px — чуть крупнее */
-  color: var(--text);            /* было text-dim → стал светлым */
+  font-size: 14px;
+  color: var(--text);
   margin: 6px 0;
   line-height: 1.6;
 }
-
 .direction-content li strong {
-  color: var(--green);           /* жирный текст — зелёный */
+  color: var(--green);
+  font-weight: 600;
 }
 
 /* ============================================================
