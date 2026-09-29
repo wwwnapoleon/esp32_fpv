@@ -130,13 +130,81 @@ function applyScrollAnimations() {
   });
 }
 
-// Применяем после загрузки страницы
+// ============================================================
+//  Анимация счётчика статистики
+// ============================================================
+
+function animateCounter(el) {
+  const target = parseInt(el.getAttribute('data-target'), 10);
+  if (isNaN(target)) return;
+
+  const suffix = el.getAttribute('data-suffix') || '';
+  const duration = 1500;             // миллисекунд
+  const startTime = performance.now();
+
+  function update(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+
+    // Плавное замедление в конце (easeOutQuart)
+    const eased = 1 - Math.pow(1 - progress, 4);
+    const current = Math.round(target * eased);
+
+    el.textContent = current + suffix;
+
+    if (progress < 1) {
+      requestAnimationFrame(update);
+    } else {
+      el.textContent = target + suffix;
+    }
+  }
+
+  requestAnimationFrame(update);
+}
+
+// Запуск при появлении в зоне видимости
+const counterObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      animateCounter(entry.target);
+      counterObserver.unobserve(entry.target);
+    }
+  });
+}, {
+  threshold: 0.5
+});
+
+function initCounters() {
+  document.querySelectorAll('.stat-value[data-target]').forEach(el => {
+    // Сбросить на 0 перед стартом
+    el.textContent = '0' + (el.getAttribute('data-suffix') || '');
+    counterObserver.observe(el);
+  });
+}
+
+// ============================================================
+//  Загрузка страницы
+// ============================================================
+
 document.addEventListener('DOMContentLoaded', () => {
   loadPage('news');
-  
-  // Немного ждём, чтобы контент успел загрузиться
-  setTimeout(applyScrollAnimations, 300);
+  setTimeout(() => {
+    applyScrollAnimations();
+    initCounters();
+  }, 300);
 });
+
+// Переопределить loadPage, чтобы счётчики запускались и на других страницах
+if (typeof loadPage === 'function') {
+  const originalFn = loadPage;
+  window.loadPage = async function(name) {
+    await originalFn(name);
+    setTimeout(() => {
+      applyScrollAnimations();
+      initCounters();
+    }, 200);
+  };
+}
 
 // И после каждой загрузки раздела
 const originalLoadPage = window.loadPage;
