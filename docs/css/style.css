@@ -1622,13 +1622,13 @@ details.blog-post > summary.animate-on-scroll.visible {
 }
 
 /* ============================================================
-   HERO С КАРТИНКОЙ (split-layout)
+   HERO С КАРТИНКОЙ (split-layout) — компактный
    ============================================================ */
 
 .hero-split {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 32px;
+  gap: 28px;
   align-items: center;
 }
 
@@ -1641,30 +1641,39 @@ details.blog-post > summary.animate-on-scroll.visible {
 }
 
 .hero-image {
-  max-width: 220px;
-  max-height: 220px;
+  max-width: 160px;              /* было 220px */
+  max-height: 160px;
   object-fit: contain;
-  filter: drop-shadow(0 10px 30px rgba(63, 185, 80, 0.3));
+  filter: drop-shadow(0 8px 20px rgba(63, 185, 80, 0.25));
 }
 
 .hero-placeholder {
-  font-size: 120px;
+  font-size: 80px;               /* было 120px */
   line-height: 1;
-  filter: drop-shadow(0 10px 30px rgba(63, 185, 80, 0.3));
+  filter: drop-shadow(0 8px 20px rgba(63, 185, 80, 0.25));
   animation: float 3s ease-in-out infinite;
 }
 
 @keyframes float {
   0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-10px); }
+  50%      { transform: translateY(-6px); }
 }
 
+/* Планшет / мобильный */
 @media (max-width: 700px) {
   .hero-split {
     grid-template-columns: 1fr;
-    gap: 24px;
+    gap: 16px;
+    text-align: center;
   }
   .hero-visual { order: -1; }
-  .hero-image { max-width: 140px; max-height: 140px; }
-  .hero-placeholder { font-size: 80px; }
+  .hero-image { max-width: 100px; max-height: 100px; }  /* было 140px */
+  .hero-placeholder { font-size: 56px; }                /* было 80px */
+  .hero-actions { justify-content: center; }
+}
+
+/* Очень маленькие экраны */
+@media (max-width: 380px) {
+  .hero-image { max-width: 80px; max-height: 80px; }
+  .hero-placeholder { font-size: 48px; }
 }
