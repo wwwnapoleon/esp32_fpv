@@ -1,18 +1,80 @@
+/*
+ * ESP32-S3 FPV Camera — только видео
+ * Плата: ESP32-S3-EYE (или любая ESP32-S3 с камерой на шлейфе)
+ * Подключение: Wi-Fi STA к роутеру M9S
+ */
+
 #include "esp_camera.h"
 #include <WiFi.h>
 #include "esp_http_server.h"
-#include "camera_pins.h"
-#include "servo_ctrl.h"
-#include "web_ui.h"
 
-// ================== НАСТРОЙКИ СЕТИ ==================
-// Подключаемся к роутеру M9S как обычный клиент (STA)
+// ================== НАСТРОЙКИ Wi-Fi ==================
 const char* WIFI_SSID = "4G-MiFi-96E0";
 const char* WIFI_PASS = "1234567890";
 
-httpd_handle_t stream_httpd = NULL;
-httpd_handle_t ctrl_httpd   = NULL;
+// ================== ПИНЫ КАМЕРЫ (ESP32-S3-EYE) ==================
+// Для ESP32-S3-EYE — распиновка фиксированная, соответствует шлейфу
+#define PWDN_GPIO_NUM     -1
+#define RESET_GPIO_NUM    -1
+#define XCLK_GPIO_NUM     15
+#define SIOD_GPIO_NUM     4
+#define SIOC_GPIO_NUM     5
 
+#define Y9_GPIO_NUM       16
+#define Y8_GPIO_NUM       17
+#define Y7_GPIO_NUM       18
+#define Y6_GPIO_NUM       12
+#define Y5_GPIO_NUM       10
+#define Y4_GPIO_NUM       8
+#define Y3_GPIO_NUM       9
+#define Y2_GPIO_NUM       11
+
+#define VSYNC_GPIO_NUM    6
+#define HREF_GPIO_NUM     7
+#define PCLK_GPIO_NUM     13
+
+// ================== HTML ==================
+const char INDEX_HTML[] PROGMEM = R"HTML(
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ESP32-S3 FPV</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background:#111; color:#eee; font-family:-apple-system,Roboto,sans-serif;
+         display:flex; flex-direction:column; height:100vh; overflow:hidden; }
+  header { padding:10px 14px; background:#1c1c1c; display:flex;
+           justify-content:space-between; align-items:center; font-size:14px; }
+  #stream { flex:1; width:100%; object-fit:contain; background:#000; }
+  .status { padding:8px; background:#1c1c1c; font-size:12px; color:#888;
+            text-align:center; }
+</style>
+</head>
+<body>
+<header>
+  <span>📷 ESP32-S3 FPV</span>
+  <span id="status">…</span>
+</header>
+<img id="stream" src="/stream">
+<div class="status" id="fps">FPS: —</div>
+<script>
+setInterval(async () => {
+  try {
+    const r = await fetch('/status');
+    const j = await r.json();
+    document.getElementById('status').textContent = j.rssi + ' dBm';
+    document.getElementById('fps').textContent = 'FPS: ' + j.fps;
+  } catch(e) {}
+}, 2000);
+</script>
+</body>
+</html>
+)HTML";
+
+// ================== ГЛОБАЛЬНЫЕ ==================
+httpd_handle_t server = NULL;
 unsigned long framesCount = 0;
 unsigned long lastFpsTime = 0;
 int currentFps = 0;
@@ -107,56 +169,45 @@ static esp_err_t stream_handler(httpd_req_t *req) {
   return res;
 }
 
-static int get_query_int(const char* q, const char* key, int def) {
-  const char* p = strstr(q, key);
-  if (!p) return def;
-  p += strlen(key);
-  if (*p == '=') p++;
-  return atoi(p);
-}
-
-static esp_err_t servo_handler(httpd_req_t *req) {
-  char buf[128];
-  int len = httpd_req_get_url_query_len(req) + 1;
-  if (len > 1 && len < (int)sizeof(buf)) {
-    if (httpd_req_get_url_query_str(req, buf, len) == ESP_OK) {
-      targetPan  = constrain(get_query_int(buf, "pan",  targetPan),  0, 180);
-      targetTilt = constrain(get_query_int(buf, "tilt", targetTilt), 0, 180);
-    }
-  }
-  httpd_resp_set_type(req, "application/json");
-  char out[96];
-  snprintf(out, sizeof(out), "{\"pan\":%d,\"tilt\":%d}", targetPan, targetTilt);
-  return httpd_resp_send(req, out, HTTPD_RESP_USE_STRLEN);
+static esp_err_t capture_handler(httpd_req_t *req) {
+  camera_fb_t *fb = esp_camera_fb_get();
+  if (!fb) { httpd_resp_send_500(req); return ESP_FAIL; }
+  httpd_resp_set_type(req, "image/jpeg");
+  httpd_resp_set_hdr(req, "Content-Disposition", "inline; filename=capture.jpg");
+  esp_err_t r = httpd_resp_send(req, (const char*)fb->buf, fb->len);
+  esp_camera_fb_return(fb);
+  return r;
 }
 
 static esp_err_t status_handler(httpd_req_t *req) {
   httpd_resp_set_type(req, "application/json");
-  char out[160];
+  char out[128];
   snprintf(out, sizeof(out),
-    "{\"fps\":%d,\"rssi\":%d,\"pan\":%d,\"tilt\":%d,\"heap\":%u}",
+    "{\"fps\":%d,\"rssi\":%d,\"heap\":%u}",
     currentFps,
     WiFi.status() == WL_CONNECTED ? WiFi.RSSI() : 0,
-    panAngle, tiltAngle, ESP.getFreeHeap());
+    ESP.getFreeHeap());
   return httpd_resp_send(req, out, HTTPD_RESP_USE_STRLEN);
 }
 
-// ================== СЕРВЕР ==================
+// ================== SERVER ==================
 void startServer() {
   httpd_config_t cfg = HTTPD_DEFAULT_CONFIG();
-  cfg.max_uri_handlers = 8;
+  cfg.max_uri_handlers = 6;
   cfg.server_port = 80;
+  cfg.lru_purge_enable = true;
 
   httpd_uri_t uri_index   = { "/",         HTTP_GET, index_handler,   NULL };
   httpd_uri_t uri_stream  = { "/stream",   HTTP_GET, stream_handler,  NULL };
-  httpd_uri_t uri_servo   = { "/servo",    HTTP_GET, servo_handler,   NULL };
+  httpd_uri_t uri_capture = { "/capture",  HTTP_GET, capture_handler, NULL };
   httpd_uri_t uri_status  = { "/status",   HTTP_GET, status_handler,  NULL };
 
-  if (httpd_start(&ctrl_httpd, &cfg) == ESP_OK) {
-    httpd_register_uri_handler(ctrl_httpd, &uri_index);
-    httpd_register_uri_handler(ctrl_httpd, &uri_stream);
-    httpd_register_uri_handler(ctrl_httpd, &uri_servo);
-    httpd_register_uri_handler(ctrl_httpd, &uri_status);
+  if (httpd_start(&server, &cfg) == ESP_OK) {
+    httpd_register_uri_handler(server, &uri_index);
+    httpd_register_uri_handler(server, &uri_stream);
+    httpd_register_uri_handler(server, &uri_capture);
+    httpd_register_uri_handler(server, &uri_status);
+    Serial.println("HTTP server started on port 80");
   }
 }
 
@@ -164,9 +215,7 @@ void startServer() {
 void setup() {
   Serial.begin(115200);
   delay(300);
-  Serial.println("\n=== ESP32-S3 FPV boot ===");
-
-  servoInit();
+  Serial.println("\n=== ESP32-S3 FPV Camera ===");
 
   if (!initCamera()) {
     Serial.println("Camera FAIL");
@@ -174,7 +223,6 @@ void setup() {
   }
   Serial.println("Camera OK");
 
-  // --- Подключение к роутеру M9S ---
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASS);
   Serial.printf("Connecting to %s", WIFI_SSID);
@@ -198,10 +246,8 @@ void setup() {
   }
 
   startServer();
-  Serial.println("HTTP server started on port 80");
 }
 
 void loop() {
-  servoUpdate();
-  delay(15);
+  delay(1000);
 }
