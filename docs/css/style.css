@@ -1070,24 +1070,29 @@ details[open] .expand-arrow {
   letter-spacing: 1px;
   font-weight: 600;
 }
-.direction-content h4:first-child { margin-top: 0; }
-
-.direction-content p {
-  font-size: 14px;
-  color: var(--text);
-  line-height: 1.65;
-  margin: 10px 0;
+.direction-content h4 {
+  font-size: 12px;
+  margin: 16px 0 8px;
+  color: var(--green);           /* зелёный — хорошо видно */
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
 }
 
 .direction-content ul {
   padding-left: 20px;
   margin: 8px 0;
 }
+
 .direction-content li {
-  font-size: 13px;
-  color: var(--text-dim);
+  font-size: 14px;               /* было 13px — чуть крупнее */
+  color: var(--text);            /* было text-dim → стал светлым */
   margin: 6px 0;
-  line-height: 1.5;
+  line-height: 1.6;
+}
+
+.direction-content li strong {
+  color: var(--green);           /* жирный текст — зелёный */
 }
 
 /* ============================================================
