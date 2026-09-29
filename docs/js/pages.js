@@ -85,6 +85,65 @@ document.querySelectorAll('.menu-item[data-page]').forEach(btn => {
   });
 });
 
+// ============================================================
+//  Анимации при скролле — карточки выезжают при появлении
+// ============================================================
+
+const scrollObserver = new IntersectionObserver((entries) => {
+  entries.forEach((entry, index) => {
+    if (entry.isIntersecting) {
+      // Задержка по очереди — 80ms
+      setTimeout(() => {
+        entry.target.classList.add('visible');
+      }, index * 80);
+      scrollObserver.unobserve(entry.target);
+    }
+  });
+}, {
+  threshold: 0.1,
+  rootMargin: '0px 0px -40px 0px'
+});
+
+// Применить ко всем «анимируемым» элементам
+function applyScrollAnimations() {
+  const selectors = [
+    '.news-card',
+    '.team-card',
+    '.stat-card',
+    '.how-step',
+    '.tech-card',
+    '.direction-card',
+    '.action-card',
+    '.blog-post',
+    '.hero',
+    '.join-section',
+    '.cta-section'
+  ];
+
+  selectors.forEach(sel => {
+    document.querySelectorAll(sel).forEach(el => {
+      if (!el.classList.contains('animate-on-scroll')) {
+        el.classList.add('animate-on-scroll');
+        scrollObserver.observe(el);
+      }
+    });
+  });
+}
+
+// Применяем после загрузки страницы
 document.addEventListener('DOMContentLoaded', () => {
   loadPage('news');
+  
+  // Немного ждём, чтобы контент успел загрузиться
+  setTimeout(applyScrollAnimations, 300);
 });
+
+// И после каждой загрузки раздела
+const originalLoadPage = window.loadPage;
+if (typeof loadPage === 'function') {
+  const originalFn = loadPage;
+  window.loadPage = async function(name) {
+    await originalFn(name);
+    setTimeout(applyScrollAnimations, 200);
+  };
+}
