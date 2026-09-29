@@ -1584,3 +1584,39 @@ details.blog-post > summary.animate-on-scroll.visible {
   .footer { padding: 24px 16px 16px; }
   .footer-content { gap: 20px; }
 }
+
+/* ============================================================
+   АНИМАЦИИ ПРИ СКРОЛЛЕ
+   ============================================================ */
+
+.animate-on-scroll {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.animate-on-scroll.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Карточки с задержкой */
+.news-card.animate-on-scroll,
+.team-card.animate-on-scroll,
+.stat-card.animate-on-scroll,
+.how-step.animate-on-scroll,
+.tech-card.animate-on-scroll,
+.direction-card.animate-on-scroll,
+.action-card.animate-on-scroll,
+.blog-post.animate-on-scroll {
+  will-change: opacity, transform;
+}
+
+/* Если пользователь предпочитает меньше движения — отключаем */
+@media (prefers-reduced-motion: reduce) {
+  .animate-on-scroll {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
