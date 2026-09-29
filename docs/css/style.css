@@ -1620,3 +1620,51 @@ details.blog-post > summary.animate-on-scroll.visible {
     transition: none;
   }
 }
+
+/* ============================================================
+   HERO С КАРТИНКОЙ (split-layout)
+   ============================================================ */
+
+.hero-split {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 32px;
+  align-items: center;
+}
+
+.hero-text { min-width: 0; }
+
+.hero-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-image {
+  max-width: 220px;
+  max-height: 220px;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 30px rgba(63, 185, 80, 0.3));
+}
+
+.hero-placeholder {
+  font-size: 120px;
+  line-height: 1;
+  filter: drop-shadow(0 10px 30px rgba(63, 185, 80, 0.3));
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+
+@media (max-width: 700px) {
+  .hero-split {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .hero-visual { order: -1; }
+  .hero-image { max-width: 140px; max-height: 140px; }
+  .hero-placeholder { font-size: 80px; }
+}
