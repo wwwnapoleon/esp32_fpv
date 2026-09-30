@@ -64,10 +64,36 @@ body,
 }
 
 /* Цифры в статистике — моно + tabular */
-.stat-number {
-  font-weight: 700;
-  letter-spacing: -0.03em;
+.stat-number,
+.stat-value {
+  font-size: 56px;                       /* ← крупнее */
+  font-weight: 800;
+  color: var(--green);                   /* ← зелёные */
+  line-height: 1;
+  margin-bottom: 12px;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -2px;
+  position: relative;
+  text-shadow: 0 4px 20px rgba(63, 185, 80, 0.4);
+  display: inline-block;
+  min-height: 56px;
+  transition: transform 0.2s;
+}
+
+.stat-card:hover .stat-number,
+.stat-card:hover .stat-value {
+  transform: scale(1.05);
+}
+
+/* Пульс при анимации */
+.stat-number.animating,
+.stat-value.animating {
+  animation: statPulse 0.8s ease-in-out;
+}
+
+@keyframes statPulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.15); }
 }
 /* Крупная типографика */
 .hero h1,
