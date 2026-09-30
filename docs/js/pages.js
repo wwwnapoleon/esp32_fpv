@@ -139,7 +139,7 @@ function animateCounter(el) {
   if (isNaN(target)) return;
 
   const suffix = el.getAttribute('data-suffix') || '';
-  const duration = 1500;             // миллисекунд
+  const duration = 2500;             // миллисекунд
   const startTime = performance.now();
 
   function update(now) {
