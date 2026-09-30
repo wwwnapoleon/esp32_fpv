@@ -52,9 +52,9 @@ img { max-width: 100%; display: block; }
   padding: 20px;
   min-height: 100vh;
   background:
-    radial-gradient(circle at 20% 20%, rgba(63,185,80,0.08), transparent 40%),
-    radial-gradient(circle at 80% 80%, rgba(47,129,247,0.08), transparent 40%),
-    var(--bg);
+    radial-gradient(circle at 20% 20%, rgba(63, 185, 80, 0.1), transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(63, 185, 80, 0.08), transparent 40%),
+    #0d1117;
 }
 
 .login-container {
