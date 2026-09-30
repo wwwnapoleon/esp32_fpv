@@ -23,17 +23,23 @@
 html { scroll-behavior: smooth; }
 
 body {
-  background: linear-gradient(135deg,
-    #0d1117 0%,
-    #0f1a13 40%,
-    #142b1d 70%,
-    #0a1f12 100%);
-  background-attachment: fixed;
-  color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(63, 185, 80, 0.08), transparent 50%),
+    radial-gradient(circle at 80% 100%, rgba(63, 185, 80, 0.06), transparent 50%),
+    #0d1117;
+  /* fixed только для больших экранов — зададим ниже */
   min-height: 100vh;
   line-height: 1.6;
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+/* На десктопе — фон «приклеен» к экрану */
+@media (min-width: 1024px) and (hover: hover) {
+  body {
+    background-attachment: fixed;
+  }
 }
 
 a { color: var(--accent-2); text-decoration: none; transition: color 0.15s; }
