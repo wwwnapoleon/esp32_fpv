@@ -1711,11 +1711,76 @@ details.blog-post > summary.animate-on-scroll.visible {
 
 
 /* ============================================================
-   Счётчик статистики — плавность
+   СТАТИСТИКА — большие зелёные цифры (ФИНАЛ)
    ============================================================ */
 
-.stat-value {
-  font-variant-numeric: tabular-nums;    /* цифры одной ширины */
-  min-height: 1em;
-  display: inline-block;
+.stat-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 32px 20px;
+  text-align: center;
+  transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card:hover {
+  border-color: var(--green);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(63, 185, 80, 0.2);
+}
+
+.stat-value,
+.stat-number {
+  font-size: 56px !important;
+  font-weight: 800 !important;
+  color: var(--green) !important;
+  line-height: 1 !important;
+  margin-bottom: 12px !important;
+  letter-spacing: -2px !important;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 4px 20px rgba(63, 185, 80, 0.4) !important;
+  display: inline-block !important;
+  min-height: 56px;
+  transition: transform 0.2s;
+}
+
+.stat-card:hover .stat-value,
+.stat-card:hover .stat-number {
+  transform: scale(1.05);
+}
+
+.stat-value.animating,
+.stat-number.animating {
+  animation: statPulse 0.8s ease-in-out;
+}
+
+@keyframes statPulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.15); }
+}
+
+.stat-label {
+  font-size: 13px;
+  color: var(--text) !important;
+  opacity: 0.85;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+@media (max-width: 600px) {
+  .stat-value,
+  .stat-number {
+    font-size: 40px !important;
+    min-height: 40px;
+  }
+  .stat-label {
+    font-size: 11px;
+  }
+  .stat-card {
+    padding: 22px 14px;
+  }
 }
