@@ -23,12 +23,11 @@
 html { scroll-behavior: smooth; }
 
 body {
-  background:
-    radial-gradient(ellipse at center,
-      rgba(46, 160, 67, 0.15) 0%,
-      rgba(63, 185, 80, 0.05) 30%,
-      #0d1117 70%),
-    #0d1117;
+  background: linear-gradient(135deg,
+    #0d1117 0%,
+    #0f1a13 40%,
+    #142b1d 70%,
+    #0a1f12 100%);
   background-attachment: fixed;
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
