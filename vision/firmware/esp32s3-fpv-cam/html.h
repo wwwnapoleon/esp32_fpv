@@ -1,4 +1,4 @@
-// html.h — HTML + CSS для страницы камеры
+// html.h — HTML + CSS
 #pragma once
 
 const char INDEX_HTML[] PROGMEM = R"HTML(
@@ -21,13 +21,15 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
   .video-wrap { width: 100%; max-width: 720px; background: black;
                 border-radius: 12px; overflow: hidden; aspect-ratio: 4/3;
                 display: flex; align-items: center; justify-content: center; }
-  .video-wrap img { width: 100%; height: 100%; object-fit: contain; }
+  .video-wrap img { width: 100%; height: 100%; object-fit: contain; display: block; }
   .controls { width: 100%; max-width: 720px; display: flex; gap: 10px;
               background: rgb(28,28,28); padding: 12px; border-radius: 10px;
-              align-items: center; }
+              align-items: center; flex-wrap: wrap; }
   .btn { padding: 10px 20px; background: rgb(42,42,42);
          border: 1px solid rgb(68,68,68); color: rgb(238,238,238);
-         border-radius: 8px; cursor: pointer; font-size: 14px; }
+         border-radius: 8px; cursor: pointer; font-size: 14px;
+         font-family: inherit; }
+  .btn:hover { background: rgb(58,58,58); }
   .status { margin-left: auto; display: flex; gap: 16px;
             font-size: 13px; color: rgb(170,170,170); }
   .status .val { color: rgb(68,170,255); font-weight: 600; }
