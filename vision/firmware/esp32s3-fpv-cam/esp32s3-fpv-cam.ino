@@ -1,19 +1,20 @@
 /*
- * ESP32-S3 FPV Camera — только видео
- * HTML и JS вынесены в отдельные .h файлы (обход бага #line)
+ * ESP32-S3 FPV Camera — два сервера
+ * Порт 80: HTML, JS, /stream, /capture
+ * Порт 81: /status (телеметрия)
  */
 
 #include "esp_camera.h"
 #include <WiFi.h>
 #include "esp_http_server.h"
-#include "html.h"        // ← HTML
-#include "app.js.h"      // ← JS
+#include "html.h"
+#include "app.js.h"
 
 // ================== НАСТРОЙКИ Wi-Fi ==================
-const char* WIFI_SSID = "RGB_Route";
+const char* WIFI_SSID = "RGB_Route";       // ← если роутер RGB_Route — поменяй
 const char* WIFI_PASS = "1234567890";
 
-// ================== ПИНЫ КАМЕРЫ (ESP32-S3-EYE) ==================
+// ================== ПИНЫ КАМЕРЫ ==================
 #define PWDN_GPIO_NUM     -1
 #define RESET_GPIO_NUM    -1
 #define XCLK_GPIO_NUM     15
@@ -34,7 +35,8 @@ const char* WIFI_PASS = "1234567890";
 #define PCLK_GPIO_NUM     13
 
 // ================== ГЛОБАЛЬНЫЕ ==================
-httpd_handle_t server = NULL;
+httpd_handle_t stream_server = NULL;   // порт 80
+httpd_handle_t ctrl_server   = NULL;   // порт 81
 unsigned long framesCount = 0;
 unsigned long lastFpsTime = 0;
 int currentFps = 0;
@@ -80,7 +82,6 @@ bool initCamera() {
     Serial.printf("Camera init failed: 0x%x\n", err);
     return false;
   }
-
   sensor_t* s = esp_camera_sensor_get();
   if (s) {
     s->set_vflip(s, 0);
@@ -89,14 +90,16 @@ bool initCamera() {
   return true;
 }
 
-// ================== HTTP HANDLERS ==================
+// ============================================================
+//  HANDLERS — ПОРТ 80 (HTML, JS, ПОТОК, СНИМОК)
+// ============================================================
+
 static esp_err_t index_handler(httpd_req_t *req) {
   httpd_resp_set_type(req, "text/html; charset=utf-8");
   httpd_resp_set_hdr(req, "Cache-Control", "no-cache, no-store");
   return httpd_resp_send(req, INDEX_HTML, HTTPD_RESP_USE_STRLEN);
 }
 
-// НОВОЕ — отдаём JS отдельным файлом (обход бага #line)
 static esp_err_t appjs_handler(httpd_req_t *req) {
   httpd_resp_set_type(req, "application/javascript; charset=utf-8");
   httpd_resp_set_hdr(req, "Cache-Control", "no-cache, no-store");
@@ -152,6 +155,10 @@ static esp_err_t capture_handler(httpd_req_t *req) {
   return r;
 }
 
+// ============================================================
+//  HANDLER — ПОРТ 81 (ТОЛЬКО СТАТУС)
+// ============================================================
+
 static esp_err_t status_handler(httpd_req_t *req) {
   httpd_resp_set_type(req, "application/json");
   httpd_resp_set_hdr(req, "Cache-Control", "no-cache");
@@ -165,31 +172,60 @@ static esp_err_t status_handler(httpd_req_t *req) {
   return httpd_resp_send(req, out, HTTPD_RESP_USE_STRLEN);
 }
 
-// ================== SERVER ==================
-void startServer() {
+// ============================================================
+//  СЕРВЕР 1 — ПОРТ 80
+// ============================================================
+
+void startStreamServer() {
   httpd_config_t cfg = HTTPD_DEFAULT_CONFIG();
   cfg.max_uri_handlers = 8;
-  cfg.server_port = 80;
+  cfg.server_port      = 80;
+  cfg.ctrl_port        = 32768;        // уникальный
   cfg.lru_purge_enable = true;
-  cfg.stack_size = 8192;
+  cfg.stack_size       = 8192;
 
-  httpd_uri_t uri_index   = { "/",         HTTP_GET, index_handler,   NULL };
-  httpd_uri_t uri_appjs   = { "/app.js",   HTTP_GET, appjs_handler,   NULL };  // ← НОВОЕ
-  httpd_uri_t uri_stream  = { "/stream",   HTTP_GET, stream_handler,  NULL };
-  httpd_uri_t uri_capture = { "/capture",  HTTP_GET, capture_handler, NULL };
-  httpd_uri_t uri_status  = { "/status",   HTTP_GET, status_handler,  NULL };
+  httpd_uri_t uri_index   = { "/",        HTTP_GET, index_handler,   NULL };
+  httpd_uri_t uri_appjs   = { "/app.js",  HTTP_GET, appjs_handler,   NULL };
+  httpd_uri_t uri_stream  = { "/stream",  HTTP_GET, stream_handler,  NULL };
+  httpd_uri_t uri_capture = { "/capture", HTTP_GET, capture_handler, NULL };
 
-  if (httpd_start(&server, &cfg) == ESP_OK) {
-    httpd_register_uri_handler(server, &uri_index);
-    httpd_register_uri_handler(server, &uri_appjs);   // ← НОВОЕ
-    httpd_register_uri_handler(server, &uri_stream);
-    httpd_register_uri_handler(server, &uri_capture);
-    httpd_register_uri_handler(server, &uri_status);
-    Serial.println("HTTP server started on port 80");
+  if (httpd_start(&stream_server, &cfg) == ESP_OK) {
+    httpd_register_uri_handler(stream_server, &uri_index);
+    httpd_register_uri_handler(stream_server, &uri_appjs);
+    httpd_register_uri_handler(stream_server, &uri_stream);
+    httpd_register_uri_handler(stream_server, &uri_capture);
+    Serial.println("✅ Stream server: port 80 (HTML, JS, /stream, /capture)");
+  } else {
+    Serial.println("❌ Stream server FAILED");
   }
 }
 
-// ================== SETUP ==================
+// ============================================================
+//  СЕРВЕР 2 — ПОРТ 81 (только /status)
+// ============================================================
+
+void startCtrlServer() {
+  httpd_config_t cfg = HTTPD_DEFAULT_CONFIG();
+  cfg.max_uri_handlers = 2;
+  cfg.server_port      = 81;
+  cfg.ctrl_port        = 32769;        // ДОЛЖЕН отличаться от 32768!
+  cfg.lru_purge_enable = true;
+  cfg.stack_size       = 4096;
+
+  httpd_uri_t uri_status = { "/status", HTTP_GET, status_handler, NULL };
+
+  if (httpd_start(&ctrl_server, &cfg) == ESP_OK) {
+    httpd_register_uri_handler(ctrl_server, &uri_status);
+    Serial.println("✅ Ctrl server: port 81 (/status)");
+  } else {
+    Serial.println("❌ Ctrl server FAILED");
+  }
+}
+
+// ============================================================
+//  SETUP
+// ============================================================
+
 void setup() {
   Serial.begin(115200);
   delay(300);
@@ -213,17 +249,18 @@ void setup() {
 
   if (WiFi.status() == WL_CONNECTED) {
     Serial.println("\n✅ WiFi connected!");
-    Serial.print("ESP32 IP: http://");
+    Serial.print("Web:     http://");
     Serial.println(WiFi.localIP());
-    Serial.printf("Stream:   http://%s/stream\n", WiFi.localIP().toString().c_str());
-    Serial.printf("Status:   http://%s/status\n", WiFi.localIP().toString().c_str());
-    Serial.printf("RSSI:     %d dBm\n", WiFi.RSSI());
+    Serial.printf("Stream:  http://%s/stream\n", WiFi.localIP().toString().c_str());
+    Serial.printf("Status:  http://%s:81/status\n", WiFi.localIP().toString().c_str());
+    Serial.printf("RSSI:    %d dBm\n", WiFi.RSSI());
   } else {
     Serial.println("\n❌ WiFi failed! Restarting...");
     ESP.restart();
   }
 
-  startServer();
+  startStreamServer();   // порт 80
+  startCtrlServer();     // порт 81
 }
 
 void loop() {
