@@ -4,62 +4,129 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FPV камера · ЭКО-ШКОЛА</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
-  <!-- Шрифты (для редизайна) -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📹</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-  <!-- Стили: сначала базовые, потом редизайн -->
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/redesign.css">
 </head>
 <body>
 
   <header class="topbar">
-    <a href="index.html" class="btn-back">← Назад</a>
+    <a href="index.html" class="btn-back">← На главную</a>
     <div class="brand">
       <span class="logo-icon">📹</span>
       <span>FPV камера</span>
     </div>
-    <span id="user-role" class="role-badge"></span>
   </header>
 
   <main class="fpv-main">
 
+    <h1>📹 FPV камера робота-сборщика</h1>
+    <p class="lead">
+      Прямая трансляция с камеры ESP32-S3 на борту робота.
+      Работает при подключении к Wi-Fi <strong>RGB_Route</strong>.
+    </p>
+
+    <!-- Блок с потоком -->
     <div class="video-container">
       <img id="stream" class="stream" alt="Поток с камеры">
       <div class="video-overlay" id="status-overlay">
-        Нажмите «Подключить», чтобы начать просмотр
+        ⏳ Подключение к камере...
       </div>
+    </div>
+
+    <!-- Инструкция (появляется, если поток не встроился) -->
+    <div class="fpv-fallback" id="fallback" style="display:none;">
+      <h3>📱 Как открыть камеру</h3>
+      <ol>
+        <li>Подключись к Wi-Fi <strong>RGB_Route</strong></li>
+        <li>Пароль: <code>1234567890</code></li>
+        <li>Открой прямую ссылку на камеру:</li>
+      </ol>
+      <a href="http://192.168.100.7" target="_blank" class="btn btn-primary" id="direct-link">
+        📹 Открыть камеру (192.168.100.7)
+      </a>
+      <p class="hint">Эта страница откроется напрямую с ESP32, минуя сайт.</p>
     </div>
 
     <div class="fpv-toolbar">
-      <button id="connect" class="btn btn-primary">🔄 Подключить</button>
-      <button id="disconnect" class="btn">⏹️ Отключить</button>
-      <button id="snapshot" class="btn">📸 Снимок</button>
+      <button id="retry" class="btn btn-primary">🔄 Подключить</button>
+      <a href="http://192.168.100.7" target="_blank" class="btn">
+        📹 Открыть камеру
+      </a>
       <span id="fps-info" class="fps-info">FPS: —</span>
-    </div>
-
-    <!-- Управление серво (только для админов) -->
-    <div class="servo-controls" id="servo-controls" style="display:none;">
-      <h3>🎛️ Управление камерой</h3>
-      <div class="row">
-        <label>PAN</label>
-        <input type="range" id="pan" min="0" max="180" value="90">
-        <span id="pan-val">90°</span>
-      </div>
-      <div class="row">
-        <label>TILT</label>
-        <input type="range" id="tilt" min="0" max="180" value="90">
-        <span id="tilt-val">90°</span>
-      </div>
     </div>
 
   </main>
 
-  <script src="js/config.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/fpv.js"></script>
+  <script>
+    // ============================================================
+    //  FPV камера: попытка встроить + фолбэк
+    // ============================================================
+    var CAMERA_URL = 'http://192.168.100.7';
+    var STREAM_URL = CAMERA_URL + '/stream';
+    var STATUS_URL = CAMERA_URL + '/status';
+
+    var streamImg = document.getElementById('stream');
+    var overlay   = document.getElementById('status-overlay');
+    var fallback  = document.getElementById('fallback');
+
+    function connectStream() {
+      overlay.style.display = 'flex';
+      overlay.textContent = '⏳ Подключение к ' + STREAM_URL + '...';
+      fallback.style.display = 'none';
+
+      var test = new Image();
+      var timeout = setTimeout(function() {
+        test.src = '';
+        showFallback('⏱ Камера не отвечает');
+      }, 5000);
+
+      test.onload = function() {
+        clearTimeout(timeout);
+        streamImg.src = STREAM_URL + '?t=' + Date.now();
+        overlay.style.display = 'none';
+        updateStatus();
+      };
+
+      test.onerror = function() {
+        clearTimeout(timeout);
+        showFallback('❌ Не удалось встроить поток');
+      };
+
+      test.src = STREAM_URL + '?t=' + Date.now();
+    }
+
+    function showFallback(reason) {
+      overlay.style.display = 'none';
+      fallback.style.display = 'block';
+      console.warn('FPV fallback:', reason);
+    }
+
+    function updateStatus() {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', STATUS_URL + '?t=' + Date.now(), true);
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          try {
+            var j = JSON.parse(xhr.responseText);
+            var el = document.getElementById('fps-info');
+            if (el) el.textContent = 'FPS: ' + (j.fps || '—');
+          } catch(e) {}
+        }
+      };
+      try { xhr.send(); } catch(e) {}
+    }
+
+    document.getElementById('retry').addEventListener('click', connectStream);
+    document.getElementById('direct-link').href = CAMERA_URL;
+
+    // Автозапуск
+    connectStream();
+    setInterval(updateStatus, 3000);
+  </script>
+
 </body>
 </html>
