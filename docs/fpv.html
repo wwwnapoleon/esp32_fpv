@@ -25,123 +25,49 @@
 
     <h1>📹 FPV камера робота-сборщика</h1>
     <p class="lead">
-      Прямая трансляция с камеры ESP32-S3 на борту робота.
-      Для работы подключитесь к Wi-Fi <strong>RGB_Route</strong>.
+      Прямая трансляция с камеры ESP32-S3 на борту робота-сборщика пластика.
     </p>
 
-    <!-- Блок с потоком -->
-    <div class="video-container">
-      <img id="stream" class="stream" alt="Поток с камеры">
-      <div class="video-overlay" id="status-overlay">
-        ⏳ Подключение к камере...
+    <!-- Большая карточка с переходом на камеру -->
+    <div class="fpv-launch-card">
+      <div class="fpv-launch-icon">📹</div>
+      <h2>Прямой эфир с камеры робота</h2>
+      <p class="fpv-launch-desc">
+        Трансляция идёт напрямую с ESP32-S3 через Wi-Fi. Откройте её в новой вкладке.
+      </p>
+
+      <div class="fpv-launch-actions">
+        <a href="http://192.168.100.7" target="_blank" class="btn btn-primary btn-lg">
+          📹 Открыть камеру
+        </a>
       </div>
-    </div>
 
-    <!-- Панель управления -->
-    <div class="fpv-toolbar">
-      <button id="retry" class="btn btn-primary">🔄 Подключить</button>
-      <a href="http://192.168.100.7" target="_blank" class="btn" id="open-camera">
-        📹 Открыть камеру
-      </a>
-      <button id="snapshot" class="btn">📸 Снимок</button>
-      <span id="fps-info" class="fps-info">FPS: —</span>
-    </div>
+      <div class="fpv-launch-instruction">
+        <h4>📱 Что нужно</h4>
+        <ol>
+          <li>Подключитесь к Wi-Fi <strong>RGB_Route</strong></li>
+          <li>Пароль: <code>1234567890</code></li>
+          <li>Нажмите <strong>«Открыть камеру»</strong></li>
+        </ol>
+      </div>
 
-    <!-- Инструкция, если поток не встроился -->
-    <div class="fpv-instruction" id="instruction" style="display:none;">
-      <h3>📱 Как открыть камеру</h3>
-      <ol>
-        <li>Подключитесь к Wi-Fi <strong>RGB_Route</strong> (пароль: <code>1234567890</code>)</li>
-        <li>Нажмите <strong>«📹 Открыть камеру»</strong> выше — откроется страница ESP32</li>
-        <li>Или откройте вручную: <a href="http://192.168.100.7" target="_blank">http://192.168.100.7</a></li>
-      </ol>
-      <p class="hint">
-        ⚠️ Встроить поток прямо в сайт не всегда возможно — браузер блокирует
-        HTTP-видео на HTTPS-сайте (mixed content). Но кнопка выше работает всегда.
+      <p class="fpv-launch-hint">
+        ℹ️ Встроить поток прямо в сайт нельзя: сайт защищён HTTPS, а камера работает по HTTP.
+        Браузер блокирует такое смешение. Но кнопка работает — открывается прямая трансляция.
       </p>
     </div>
 
+    <!-- Панель быстрых действий -->
+    <div class="fpv-quick-actions">
+      <a href="http://192.168.100.7/capture" target="_blank" class="btn">
+        📸 Сделать снимок
+      </a>
+      <a href="http://192.168.100.7:81/status" target="_blank" class="btn">
+        📊 Статус камеры
+      </a>
+    </div>
+
   </main>
-
-  <script>
-    // ============================================================
-    //  FPV камера: попытка встроить + инструкция
-    // ============================================================
-    var CAMERA_URL = 'http://192.168.100.7';
-    var STREAM_URL = CAMERA_URL + ':81/stream';   // поток — порт 81
-    var STATUS_URL = CAMERA_URL + '/status';      // статус — порт 80
-    var SNAPSHOT_URL = CAMERA_URL + '/capture';   // снимок — порт 80
-
-    var streamImg   = document.getElementById('stream');
-    var overlay     = document.getElementById('status-overlay');
-    var instruction = document.getElementById('instruction');
-
-    function connectStream() {
-      overlay.style.display = 'flex';
-      overlay.textContent = '⏳ Подключение к ' + STREAM_URL + '...';
-      instruction.style.display = 'none';
-
-      var test = new Image();
-      var timeout = setTimeout(function() {
-        test.src = '';
-        showInstruction('⏱ Камера не отвечает');
-      }, 5000);
-
-      test.onload = function() {
-        clearTimeout(timeout);
-        streamImg.src = STREAM_URL + '?t=' + Date.now();
-        overlay.style.display = 'none';
-        updateStatus();
-      };
-
-      test.onerror = function() {
-        clearTimeout(timeout);
-        showInstruction('❌ Поток заблокирован браузером');
-      };
-
-      test.src = STREAM_URL + '?t=' + Date.now();
-    }
-
-    function showInstruction(reason) {
-      overlay.style.display = 'none';
-      instruction.style.display = 'block';
-      console.warn('FPV fallback:', reason);
-    }
-
-    function updateStatus() {
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', STATUS_URL + '?t=' + Date.now(), true);
-      xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-          try {
-            var j = JSON.parse(xhr.responseText);
-            var el = document.getElementById('fps-info');
-            if (el) el.textContent = 'FPS: ' + (j.fps || '—') + ' | RSSI: ' + (j.rssi || '—') + ' dBm';
-          } catch(e) {}
-        }
-      };
-      try { xhr.send(); } catch(e) {}
-    }
-
-    // Снимок
-    function takeSnapshot() {
-      var url = SNAPSHOT_URL + '?t=' + Date.now();
-      var a = document.createElement('a');
-      a.href = url;
-      a.download = 'fpv-snapshot-' + Date.now() + '.jpg';
-      a.target = '_blank';
-      a.click();
-    }
-
-    // Слушатели
-    document.getElementById('retry').addEventListener('click', connectStream);
-    document.getElementById('snapshot').addEventListener('click', takeSnapshot);
-    document.getElementById('open-camera').href = CAMERA_URL;
-
-    // Автозапуск
-    connectStream();
-    setInterval(updateStatus, 3000);
-  </script>
 
 </body>
 </html>
