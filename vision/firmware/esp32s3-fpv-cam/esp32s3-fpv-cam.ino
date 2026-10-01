@@ -1,19 +1,19 @@
 /*
  * ESP32-S3 FPV Camera — только видео
- * Плата: ESP32-S3-EYE (или любая ESP32-S3 с камерой на шлейфе)
- * Подключение: Wi-Fi STA к роутеру M9S
+ * HTML и JS вынесены в отдельные .h файлы (обход бага #line)
  */
 
 #include "esp_camera.h"
 #include <WiFi.h>
 #include "esp_http_server.h"
+#include "html.h"        // ← HTML
+#include "app.js.h"      // ← JS
 
 // ================== НАСТРОЙКИ Wi-Fi ==================
-const char* WIFI_SSID = "4G-MiFi-96E0";
+const char* WIFI_SSID = "RGB_Route";
 const char* WIFI_PASS = "1234567890";
 
 // ================== ПИНЫ КАМЕРЫ (ESP32-S3-EYE) ==================
-// Для ESP32-S3-EYE — распиновка фиксированная, соответствует шлейфу
 #define PWDN_GPIO_NUM     -1
 #define RESET_GPIO_NUM    -1
 #define XCLK_GPIO_NUM     15
@@ -32,46 +32,6 @@ const char* WIFI_PASS = "1234567890";
 #define VSYNC_GPIO_NUM    6
 #define HREF_GPIO_NUM     7
 #define PCLK_GPIO_NUM     13
-
-// ================== HTML ==================
-const char INDEX_HTML[] PROGMEM = R"HTML(
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ESP32-S3 FPV</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background:#111; color:#eee; font-family:-apple-system,Roboto,sans-serif;
-         display:flex; flex-direction:column; height:100vh; overflow:hidden; }
-  header { padding:10px 14px; background:#1c1c1c; display:flex;
-           justify-content:space-between; align-items:center; font-size:14px; }
-  #stream { flex:1; width:100%; object-fit:contain; background:#000; }
-  .status { padding:8px; background:#1c1c1c; font-size:12px; color:#888;
-            text-align:center; }
-</style>
-</head>
-<body>
-<header>
-  <span>📷 ESP32-S3 FPV</span>
-  <span id="status">…</span>
-</header>
-<img id="stream" src="/stream">
-<div class="status" id="fps">FPS: —</div>
-<script>
-setInterval(async () => {
-  try {
-    const r = await fetch('/status');
-    const j = await r.json();
-    document.getElementById('status').textContent = j.rssi + ' dBm';
-    document.getElementById('fps').textContent = 'FPS: ' + j.fps;
-  } catch(e) {}
-}, 2000);
-</script>
-</body>
-</html>
-)HTML";
 
 // ================== ГЛОБАЛЬНЫЕ ==================
 httpd_handle_t server = NULL;
@@ -122,15 +82,25 @@ bool initCamera() {
   }
 
   sensor_t* s = esp_camera_sensor_get();
-  s->set_vflip(s, 0);
-  s->set_hmirror(s, 0);
+  if (s) {
+    s->set_vflip(s, 0);
+    s->set_hmirror(s, 0);
+  }
   return true;
 }
 
 // ================== HTTP HANDLERS ==================
 static esp_err_t index_handler(httpd_req_t *req) {
   httpd_resp_set_type(req, "text/html; charset=utf-8");
+  httpd_resp_set_hdr(req, "Cache-Control", "no-cache, no-store");
   return httpd_resp_send(req, INDEX_HTML, HTTPD_RESP_USE_STRLEN);
+}
+
+// НОВОЕ — отдаём JS отдельным файлом (обход бага #line)
+static esp_err_t appjs_handler(httpd_req_t *req) {
+  httpd_resp_set_type(req, "application/javascript; charset=utf-8");
+  httpd_resp_set_hdr(req, "Cache-Control", "no-cache, no-store");
+  return httpd_resp_send(req, APP_JS, HTTPD_RESP_USE_STRLEN);
 }
 
 static esp_err_t stream_handler(httpd_req_t *req) {
@@ -140,6 +110,8 @@ static esp_err_t stream_handler(httpd_req_t *req) {
 
   res = httpd_resp_set_type(req, "multipart/x-mixed-replace; boundary=frame");
   if (res != ESP_OK) return res;
+
+  httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
 
   while (true) {
     fb = esp_camera_fb_get();
@@ -174,6 +146,7 @@ static esp_err_t capture_handler(httpd_req_t *req) {
   if (!fb) { httpd_resp_send_500(req); return ESP_FAIL; }
   httpd_resp_set_type(req, "image/jpeg");
   httpd_resp_set_hdr(req, "Content-Disposition", "inline; filename=capture.jpg");
+  httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
   esp_err_t r = httpd_resp_send(req, (const char*)fb->buf, fb->len);
   esp_camera_fb_return(fb);
   return r;
@@ -181,6 +154,8 @@ static esp_err_t capture_handler(httpd_req_t *req) {
 
 static esp_err_t status_handler(httpd_req_t *req) {
   httpd_resp_set_type(req, "application/json");
+  httpd_resp_set_hdr(req, "Cache-Control", "no-cache");
+  httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
   char out[128];
   snprintf(out, sizeof(out),
     "{\"fps\":%d,\"rssi\":%d,\"heap\":%u}",
@@ -193,17 +168,20 @@ static esp_err_t status_handler(httpd_req_t *req) {
 // ================== SERVER ==================
 void startServer() {
   httpd_config_t cfg = HTTPD_DEFAULT_CONFIG();
-  cfg.max_uri_handlers = 6;
+  cfg.max_uri_handlers = 8;
   cfg.server_port = 80;
   cfg.lru_purge_enable = true;
+  cfg.stack_size = 8192;
 
   httpd_uri_t uri_index   = { "/",         HTTP_GET, index_handler,   NULL };
+  httpd_uri_t uri_appjs   = { "/app.js",   HTTP_GET, appjs_handler,   NULL };  // ← НОВОЕ
   httpd_uri_t uri_stream  = { "/stream",   HTTP_GET, stream_handler,  NULL };
   httpd_uri_t uri_capture = { "/capture",  HTTP_GET, capture_handler, NULL };
   httpd_uri_t uri_status  = { "/status",   HTTP_GET, status_handler,  NULL };
 
   if (httpd_start(&server, &cfg) == ESP_OK) {
     httpd_register_uri_handler(server, &uri_index);
+    httpd_register_uri_handler(server, &uri_appjs);   // ← НОВОЕ
     httpd_register_uri_handler(server, &uri_stream);
     httpd_register_uri_handler(server, &uri_capture);
     httpd_register_uri_handler(server, &uri_status);
