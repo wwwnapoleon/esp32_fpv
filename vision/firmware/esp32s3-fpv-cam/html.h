@@ -41,7 +41,7 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
 </header>
 
 <div class="video-wrap">
-  <img id="stream" src="http://192.168.100.7:81/stream" alt="FPV">
+  <img id="stream" src="/stream" alt="FPV">
 </div>
 
 <div class="controls">
