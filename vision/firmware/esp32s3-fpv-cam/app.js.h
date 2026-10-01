@@ -3,12 +3,12 @@
 
 const char APP_JS[] PROGMEM = R"JS(
 document.getElementById("snapBtn").addEventListener("click", function() {
-  window.open("http://192.168.100.7/capture?t=" + Date.now(), "_blank");
+  window.open("/capture?t=" + Date.now(), "_blank");
 });
 
 function updateStatus() {
   var xhr = new XMLHttpRequest();
-  xhr.open("GET", "http://192.168.100.7/status?t=" + Date.now(), true);
+  xhr.open("GET", "/status?t=" + Date.now(), true);
   xhr.onreadystatechange = function() {
     if (xhr.readyState === 4 && xhr.status === 200) {
       try {
