@@ -174,25 +174,74 @@
 
   </section>
 
-  <section class="review-section">
+   <!-- ============================================================
+       ФОРМА ОТЗЫВА — только для залогиненных
+       ============================================================ -->
+  <section class="review-section" id="review-section">
     <h2>💬 Задайте вопрос команде</h2>
     <p>Есть идея, вопрос или отзыв? Напишите нам!</p>
 
-    <form id="review-form" class="review-form">
-      <div class="input-group">
-        <label for="review-name">Ваше имя</label>
-        <input type="text" id="review-name" placeholder="Как вас зовут?" required>
+    <!-- Форма (для залогиненных) -->
+    <div id="review-form-block" style="display: none;">
+      <form id="review-form" class="review-form">
+        <div class="input-group">
+          <label for="review-name">Ваше имя</label>
+          <input type="text" id="review-name" placeholder="Как вас зовут?" required readonly>
+        </div>
+
+        <div class="input-group">
+          <label for="review-message">Сообщение</label>
+          <textarea id="review-message" rows="5"
+                    placeholder="Ваш вопрос или отзыв..." required></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">📤 Отправить</button>
+      </form>
+
+      <p id="review-status" class="review-status"></p>
+    </div>
+
+    <!-- Заглушка (для незалогиненных) -->
+    <div id="review-locked" class="review-locked" style="display: none;">
+      <div class="review-locked-icon">🔒</div>
+      <h3>Войдите, чтобы оставить отзыв</h3>
+      <p>
+        Отзывы, вопросы и предложения могут оставлять только
+        зарегистрированные ученики лицея. Это помогает нам
+        поддерживать порядок и не терять ваши сообщения.
+      </p>
+      <div class="review-locked-actions">
+        <a href="login-user.html" class="btn btn-primary">👤 Войти</a>
+        <a href="register.html" class="btn">📝 Зарегистрироваться</a>
       </div>
-
-      <div class="input-group">
-        <label for="review-message">Сообщение</label>
-        <textarea id="review-message" rows="5" placeholder="Ваш вопрос или отзыв..." required></textarea>
-      </div>
-
-      <button type="submit" class="btn btn-primary">📤 Отправить</button>
-    </form>
-
-    <p id="review-status" class="review-status"></p>
+    </div>
   </section>
+
+  <!-- Скрипт для определения залогиненности -->
+  <script>
+    (function() {
+      const user = getUser();
+      const formBlock = document.getElementById('review-form-block');
+      const lockedBlock = document.getElementById('review-locked');
+      const nameInput = document.getElementById('review-name');
+
+      if (!formBlock || !lockedBlock) return;
+
+      if (user) {
+        // Залогинен — показываем форму
+        formBlock.style.display = 'block';
+        lockedBlock.style.display = 'none';
+
+        // Подставляем имя из профиля
+        if (nameInput && user.fio) {
+          nameInput.value = user.fio;
+        }
+      } else {
+        // Не залогинен — показываем заглушку
+        formBlock.style.display = 'none';
+        lockedBlock.style.display = 'block';
+      }
+    })();
+  </script>
 
 </article>
