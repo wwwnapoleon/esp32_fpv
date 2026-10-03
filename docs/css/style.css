@@ -2246,15 +2246,13 @@ details.blog-post > summary.animate-on-scroll.visible {
 }
 
 /* ============================================================
-   СТРАНИЦА ДОСТУПА К ПРОЕКТУ
+   СТРАНИЦА ДОСТУПА К ПРОЕКТУ — две карточки
    ============================================================ */
 
-.access-page {
-  min-height: 100vh;
-}
+.access-page { min-height: 100vh; }
 
 .access-main {
-  max-width: 900px;
+  max-width: 1000px;
   margin: 0 auto;
   padding: 32px 24px 80px;
 }
@@ -2271,25 +2269,47 @@ details.blog-post > summary.animate-on-scroll.visible {
 .access-hero .lead {
   font-size: 16px;
   color: var(--text-dim);
-  max-width: 560px;
+  max-width: 620px;
   margin: 0 auto;
   line-height: 1.6;
 }
+.access-hero .lead strong {
+  color: var(--text);
+}
 
-/* Карточка с QR + список */
-.access-card {
+/* Сетка из двух карточек */
+.access-grid {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 40px;
-  align-items: center;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.access-card {
   background:
-    linear-gradient(135deg, rgba(63,185,80,0.08), rgba(46,160,67,0.03)),
+    linear-gradient(135deg, rgba(63,185,80,0.06), rgba(46,160,67,0.02)),
     var(--bg-2);
-  border: 1px solid var(--green);
+  border: 1px solid var(--border);
   border-radius: 20px;
-  padding: 36px 40px;
+  padding: 32px 28px;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.2s;
+}
+
+.access-card--guest {
+  border-color: var(--border);
+}
+.access-card--guest:hover {
+  border-color: var(--green);
+}
+
+.access-card--admin {
+  border-color: rgba(210, 153, 34, 0.4);
+}
+.access-card--admin:hover {
+  border-color: var(--yellow);
 }
 
 .access-card::before {
@@ -2297,83 +2317,61 @@ details.blog-post > summary.animate-on-scroll.visible {
   position: absolute;
   top: -50%;
   right: -20%;
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle, rgba(63,185,80,0.12), transparent 70%);
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, rgba(63,185,80,0.1), transparent 70%);
   pointer-events: none;
 }
-
-.access-text {
-  position: relative;
-  min-width: 0;
-}
-.access-text h2 {
-  font-size: 18px;
-  margin: 0 0 18px;
-  color: var(--text);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-weight: 700;
+.access-card--admin::before {
+  background: radial-gradient(circle, rgba(210,153,34,0.1), transparent 70%);
 }
 
-.access-features {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 24px;
-}
-.access-features li {
+.access-card-header {
   display: flex;
   gap: 14px;
-  align-items: flex-start;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
+  align-items: center;
+  margin-bottom: 24px;
+  position: relative;
 }
-.access-features li:last-child {
-  border-bottom: none;
-}
-.access-feature-icon {
-  font-size: 24px;
+.access-card-icon {
+  font-size: 40px;
   line-height: 1;
   flex-shrink: 0;
 }
-.access-features strong {
-  display: block;
-  font-size: 14px;
+.access-card-header h2 {
+  font-size: 20px;
+  margin: 0 0 2px;
   color: var(--text);
-  margin-bottom: 2px;
 }
-.access-features p {
+.access-card-subtitle {
   font-size: 13px;
   color: var(--text-dim);
   margin: 0;
-  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
-/* QR-часть */
-.access-code {
+/* QR внутри карточки */
+.access-qr-wrap {
   text-align: center;
-  position: relative;
-  flex-shrink: 0;
+  margin-bottom: 20px;
 }
-
 .access-qr-link {
-  display: block;
+  display: inline-block;
   transition: transform 0.3s;
 }
 .access-qr-link:hover {
   transform: scale(1.04);
 }
-
 .access-qr {
-  width: 200px;
-  height: 200px;
+  width: 180px;
+  height: 180px;
   background: #fff;
   padding: 10px;
   border-radius: 14px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.35);
   display: block;
 }
-
 .access-hint {
   font-size: 12px;
   color: var(--text-dim);
@@ -2383,43 +2381,85 @@ details.blog-post > summary.animate-on-scroll.visible {
   font-weight: 500;
 }
 
-/* Адаптив */
-@media (max-width: 900px) {
-  .access-card {
-    grid-template-columns: 1fr;
-    text-align: center;
-    gap: 28px;
-    padding: 32px 24px;
-  }
-  .access-code {
-    order: -1;
-  }
-  .access-features li {
-    text-align: left;
-    max-width: 360px;
-    margin: 0 auto;
-  }
+/* Список фич */
+.access-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px;
+  flex: 1;
+}
+.access-features li {
+  font-size: 13px;
+  color: var(--text-dim);
+  padding: 6px 0;
+  line-height: 1.5;
+}
+.access-features--admin li {
+  color: var(--text);
 }
 
-@media (max-width: 600px) {
+/* Форма админа */
+.access-admin-form {
+  margin-bottom: 16px;
+  position: relative;
+}
+.access-admin-form .input-group {
+  margin-bottom: 12px;
+}
+.access-admin-form .input-group label {
+  font-size: 12px;
+  color: var(--text-dim);
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+.access-admin-form input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.access-admin-form input:focus {
+  border-color: var(--yellow);
+}
+.access-admin-form button {
+  width: 100%;
+  margin-top: 6px;
+}
+
+/* Ошибка */
+.access-card .error {
+  color: var(--red);
+  font-size: 13px;
+  margin: 8px 0;
+  min-height: 18px;
+  text-align: center;
+}
+
+/* Ссылки */
+.access-card > .btn,
+.access-card > a.btn {
+  position: relative;
+}
+
+/* Адаптив */
+@media (max-width: 800px) {
+  .access-grid {
+    grid-template-columns: 1fr;
+  }
   .access-main {
     padding: 22px 16px 60px;
   }
-  .access-hero h1 { font-size: 22px; }
+  .access-hero h1 { font-size: 24px; }
   .access-hero .lead { font-size: 14px; }
-  .access-card {
-    padding: 24px 18px;
-    border-radius: 16px;
-  }
-  .access-qr {
-    width: 180px;
-    height: 180px;
-    margin: 0 auto;
-  }
-  .access-text .btn-lg {
-    width: 100%;
-    text-align: center;
-  }
+  .access-card { padding: 24px 20px; }
+  .access-qr { width: 160px; height: 160px; margin: 0 auto; }
 }
 
 /* ============================================================
