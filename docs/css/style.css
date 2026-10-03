@@ -1944,3 +1944,126 @@ details.blog-post > summary.animate-on-scroll.visible {
   .user-avatar { width: 28px; height: 28px; font-size: 14px; }
   .btn-logout-small { width: 28px; height: 28px; }
 }
+
+/* ============================================================
+   СТРАНИЦА ПРОЕКТА
+   ============================================================ */
+
+.project-page {
+  min-height: 100vh;
+}
+
+.project-main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 24px 80px;
+}
+
+.project-main h1 {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.project-block {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 24px;
+  margin: 28px 0;
+  transition: border-color 0.2s;
+}
+.project-block:hover {
+  border-color: var(--green);
+}
+
+.project-block-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.project-block-icon {
+  font-size: 38px;
+  line-height: 1;
+}
+.project-block-header h2 {
+  font-size: 20px;
+  margin: 0 0 4px;
+  color: var(--text);
+}
+.project-block-desc {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin: 0;
+}
+
+.project-block-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+.project-status {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+/* FPV внутри project */
+.fpv-embed {
+  position: relative;
+  background: #000;
+  border-radius: 12px;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.fpv-embed img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.fpv-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.8);
+  color: var(--text-dim);
+  font-size: 14px;
+  text-align: center;
+  padding: 20px;
+}
+
+/* БД toolbar */
+.db-toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.db-toolbar input {
+  flex: 1;
+  min-width: 200px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+}
+.db-toolbar input:focus {
+  outline: none;
+  border-color: var(--green);
+}
+
+@media (max-width: 600px) {
+  .project-main { padding: 20px 16px 60px; }
+  .project-block { padding: 18px; }
+  .project-block-icon { font-size: 30px; }
+  .project-block-header h2 { font-size: 17px; }
+}
