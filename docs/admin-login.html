@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Вход администратора · ЭКО-ШКОЛА</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👑</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/redesign.css">
+</head>
+<body class="login-page">
+  <div class="login-container">
+
+    <div class="logo-block">
+      <h1>👑 ЭКО-ШКОЛА</h1>
+      <p class="subtitle">Вход администратора</p>
+    </div>
+
+    <form id="admin-login" autocomplete="off">
+      <div class="input-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="admin@eco-school.ru" required>
+      </div>
+
+      <div class="input-group">
+        <label for="password">Пароль</label>
+        <input type="password" id="password" placeholder="••••••••" required>
+      </div>
+
+      <button type="submit" class="btn-primary">Войти как админ</button>
+    </form>
+
+    <p id="login-error" class="error"></p>
+
+    <p class="footer-hint">
+      Только для администраторов проекта
+    </p>
+
+    <a href="index.html" class="btn-back">← На главную</a>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script>
+    document.getElementById('admin-login').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const email    = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const errorEl  = document.getElementById('login-error');
+
+      errorEl.textContent = '⏳ Вход...';
+      errorEl.style.color = '';
+
+      if (!SB) {
+        errorEl.textContent = '⚠️ Supabase не настроен';
+        errorEl.style.color = '#f85149';
+        return;
+      }
+
+      try {
+        const { data, error } = await SB.auth.signInWithPassword({
+          email: email,
+          password: password
+        });
+
+        if (error) throw error;
+
+        console.log('✅ Админ вошёл:', data.user.email);
+
+        errorEl.textContent = '✅ Успешно! Переход...';
+        errorEl.style.color = '#3fb950';
+
+        setTimeout(() => {
+          window.location.href = 'project.html';
+        }, 800);
+
+      } catch (err) {
+        console.error('Login error:', err);
+        errorEl.textContent = '❌ ' + (err.message || 'Неверный логин или пароль');
+        errorEl.style.color = '#f85149';
+      }
+    });
+  </script>
+</body>
+</html>
