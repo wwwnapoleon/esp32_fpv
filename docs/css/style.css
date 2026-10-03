@@ -2519,3 +2519,126 @@ details.blog-post > summary.animate-on-scroll.visible {
     width: 100%;
   }
 }
+
+/* ============================================================
+   СТРАНИЦА ПРОЕКТА — топбар и режимы
+   ============================================================ */
+
+.project-page .topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.project-page .role-badge {
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--bg-3);
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+/* Админ — зелёный бейдж */
+body.is-admin .role-badge {
+  background: rgba(63, 185, 80, 0.15);
+  color: var(--green);
+}
+
+/* Гость — приглушённый */
+body.is-guest .role-badge {
+  background: var(--bg-3);
+  color: var(--text-dim);
+}
+
+.project-page .btn-logout {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+.project-page .btn-logout:hover {
+  background: rgba(248, 81, 73, 0.15);
+  color: var(--red);
+  border-color: var(--red);
+}
+
+/* Управление серво — только для админа */
+.admin-only {
+  display: none;
+}
+
+.servo-controls {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--green);
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-top: 16px;
+}
+.servo-controls h3 {
+  font-size: 14px;
+  color: var(--green);
+  margin: 0 0 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.servo-controls .row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.servo-controls label {
+  width: 60px;
+  font-size: 13px;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+.servo-controls input[type=range] {
+  flex: 1;
+  accent-color: var(--green);
+}
+.servo-controls span {
+  width: 50px;
+  text-align: right;
+  font-size: 13px;
+  color: var(--text);
+}
+
+/* Информация для гостя */
+.project-page.is-guest .project-block::after {
+  content: '👀 Просмотр';
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-size: 11px;
+  color: var(--text-dim);
+  background: var(--bg-3);
+  padding: 4px 10px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.project-block {
+  position: relative;
+}
+
+@media (max-width: 600px) {
+  .project-page .topbar-actions {
+    gap: 8px;
+  }
+  .project-page .role-badge {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+  .project-page .btn-logout {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+}
