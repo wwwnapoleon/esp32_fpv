@@ -1,51 +1,41 @@
 // ============================================================
-//  Аутентификация через Supabase
-//  - Гость: QR-код
-//  - Админ: email + пароль
+//  Аутентификация
+//  - Юзер: localStorage (ФИО + цвет)
+//  - Админ: Supabase Auth (email + пароль)
 // ============================================================
 
-// ---- Форма логина ----
-const loginForm = document.getElementById('admin-login');
+// ---------- ЮЗЕР (ученик) ----------
 
-if (loginForm) {
-  loginForm.addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const email    = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-    const errorEl  = document.getElementById('login-error');
-    errorEl.textContent = '';
-
-    if (!SB) {
-      errorEl.textContent = '⚠️ Supabase не настроен. Вход недоступен.';
-      return;
-    }
-
-    errorEl.textContent = '⏳ Вход...';
-
-    try {
-      const { data, error } = await SB.auth.signInWithPassword({
-        email: email,
-        password: password
-      });
-
-      if (error) throw error;
-
-      // Сохраняем сессию в localStorage (Supabase сам это делает)
-      console.log('✅ Вход выполнен:', data.user.email);
-
-      // Переходим на главную
-      window.location.href = 'index.html';
-
-    } catch (err) {
-      console.error('Login error:', err);
-      errorEl.textContent = '❌ ' + (err.message || 'Неверный логин или пароль');
-    }
-  });
+// Сохранить юзера
+function setUser(user) {
+  if (user) {
+    localStorage.setItem('user', JSON.stringify(user));
+  } else {
+    localStorage.removeItem('user');
+  }
 }
 
-// ---- Проверка, залогинен ли пользователь ----
-async function getCurrentUser() {
-  if (!SB) return null;
+// Получить юзера из localStorage
+function getUser() {
+  try {
+    const json = localStorage.getItem('user');
+    return json ? JSON.parse(json) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Выход юзера
+function logoutUser() {
+  localStorage.removeItem('user');
+  window.location.href = 'index.html';
+}
+
+// ---------- АДМИН (Supabase Auth) ----------
+
+// Проверка, залогинен ли админ
+async function getAdminUser() {
+  if (typeof SB === 'undefined' || !SB) return null;
   try {
     const { data: { user } } = await SB.auth.getUser();
     return user;
@@ -54,69 +44,80 @@ async function getCurrentUser() {
   }
 }
 
-// ---- Проверка доступа ----
-function checkAccess(requiredRole) {
-  const urlParams = new URLSearchParams(window.location.search);
-  const roleFromUrl = urlParams.get('role');
-
-  // QR → гость
-  if (roleFromUrl === 'guest') {
-    sessionStorage.setItem('user', JSON.stringify({ role: 'guest' }));
-    return { role: 'guest' };
+// Выход админа
+async function logoutAdmin() {
+  if (SB) {
+    await SB.auth.signOut();
   }
+  sessionStorage.removeItem('admin');
+  window.location.href = 'admin-login.html';
+}
 
-  const userJson = sessionStorage.getItem('user');
-  if (!userJson) {
-    window.location.href = 'login.html';
-    return null;
-  }
+// ---------- ЗАЩИТА СТРАНИЦ ----------
 
-  const user = JSON.parse(userJson);
-  if (requiredRole === 'admin' && user.role !== 'admin') {
-    alert('Доступ только для администраторов');
-    window.location.href = 'index.html';
+// Защита страницы проекта (только для админа)
+async function requireAdmin() {
+  const user = await getAdminUser();
+  if (!user) {
+    window.location.href = 'admin-login.html';
     return null;
   }
   return user;
 }
 
-// ---- Выход ----
-async function logout() {
-  if (SB) {
-    await SB.auth.signOut();
-  }
-  sessionStorage.removeItem('user');
-  window.location.href = 'index.html';
-}
+// ---------- ОБНОВЛЕНИЕ ТОПБАРА ----------
 
-// ---- Обновление UI в топбаре ----
-async function updateUserUI() {
+// Обновление топбара на ИНФО-сайте
+function updateUserTopbar() {
   const loginBtn = document.querySelector('.btn-login');
   if (!loginBtn) return;
 
-  const user = await getCurrentUser();
+  const user = getUser();
 
   if (user) {
-    // Заменяем кнопку «Войти» на имя + кнопку выхода
+    // Показываем имя юзера
     loginBtn.outerHTML = `
       <div class="user-menu" id="user-menu">
-        <div class="user-avatar" id="user-avatar">👑</div>
-        <div class="user-name" id="user-name">${user.email.split('@')[0]}</div>
+        <div class="user-avatar" style="background: ${user.color || '#3fb950'};">
+          ${(user.fio || '?').charAt(0).toUpperCase()}
+        </div>
+        <div class="user-name">${user.fio || 'Ученик'}</div>
         <button class="btn-logout-small" id="logout-btn" title="Выйти">→</button>
       </div>
     `;
-
-    // Слушатель на выход
-    document.getElementById('logout-btn')?.addEventListener('click', logout);
-
-    // Сохраняем роль в sessionStorage
-    sessionStorage.setItem('user', JSON.stringify({
-      role: 'admin',
-      email: user.email,
-      id: user.id
-    }));
+    document.getElementById('logout-btn')?.addEventListener('click', logoutUser);
   }
+  // Если не залогинен — оставляем кнопку «Войти»
 }
 
-// Запускаем обновление UI при загрузке
-document.addEventListener('DOMContentLoaded', updateUserUI);
+// Обновление топбара на СТРАНИЦЕ ПРОЕКТА (для админа)
+async function updateAdminTopbar() {
+  const loginBtn = document.querySelector('.btn-login');
+  if (!loginBtn) return;
+
+  const user = await getAdminUser();
+  if (!user) return;
+
+  loginBtn.outerHTML = `
+    <div class="user-menu" id="user-menu">
+      <div class="user-avatar" style="background: #3fb950;">👑</div>
+      <div class="user-name">${user.email.split('@')[0]}</div>
+      <button class="btn-logout-small" id="logout-btn" title="Выйти">→</button>
+    </div>
+  `;
+  document.getElementById('logout-btn')?.addEventListener('click', logoutAdmin);
+}
+
+// Автозапуск: обновляем топбар, если он есть
+document.addEventListener('DOMContentLoaded', () => {
+  // Определяем тип страницы
+  const isProjectPage = document.body.classList.contains('project-page') ||
+                        document.body.classList.contains('fpv-page') ||
+                        document.body.classList.contains('database-page');
+
+  if (isProjectPage) {
+    updateAdminTopbar();
+  } else {
+    updateUserTopbar();
+  }
+});
