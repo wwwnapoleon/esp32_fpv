@@ -5,16 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Регистрация · ЭКО-ШКОЛА</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
-  <!-- Шрифты (для редизайна) -->
+
+  <!-- Шрифты -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Стили: сначала базовые, потом редизайн -->
+  <!-- Стили -->
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/redesign.css">
 </head>
-  
+
 <body class="login-page">
   <div class="login-container">
 
@@ -36,7 +37,7 @@
 
       <div class="input-group">
         <label for="color">Любимый цвет</label>
-        <input type="color" id="color" value="#2f81f7">
+        <input type="color" id="color" value="#3fb950">
       </div>
 
       <button type="submit" class="btn-primary">📝 Зарегистрироваться</button>
@@ -51,24 +52,62 @@
     <a href="index.html" class="btn-back">← На главную</a>
   </div>
 
+  <!-- ============ СКРИПТЫ ============ -->
+
+  <!-- 1. Библиотека Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- 2. Конфигурация (создаёт CONFIG и SB) -->
+  <script src="js/config.js"></script>
+
+  <!-- 3. Логика регистрации -->
   <script>
-    document.getElementById('register-form').addEventListener('submit', function(e) {
+    document.getElementById('register-form').addEventListener('submit', async function(e) {
       e.preventDefault();
-      var fio   = document.getElementById('fio').value.trim();
-      var cls   = document.getElementById('class').value.trim();
-      var color = document.getElementById('color').value;
+
+      var fio      = document.getElementById('fio').value.trim();
+      var cls      = document.getElementById('class').value.trim();
+      var color    = document.getElementById('color').value;
       var statusEl = document.getElementById('register-status');
 
       statusEl.textContent = '⏳ Сохранение...';
       statusEl.className = 'error';
 
+      // ---- Supabase режим ----
+      if (typeof SB !== 'undefined' && SB) {
+        try {
+          const { data, error } = await SB
+            .from('students')
+            .insert([{ fio: fio, class: cls, color: color }])
+            .select();
+
+          if (error) throw error;
+
+          console.log('✅ Сохранено в Supabase:', data);
+
+          statusEl.textContent = '✅ Спасибо, ' + fio + '! Вы зарегистрированы.';
+          statusEl.className = 'review-status success';
+
+          setTimeout(function() {
+            window.location.href = 'index.html';
+          }, 2000);
+
+        } catch (err) {
+          console.error('❌ Supabase error:', err);
+          statusEl.textContent = '❌ Ошибка: ' + err.message;
+        }
+        return;
+      }
+
+      // ---- Демо-режим (localStorage) ----
+      console.warn('⚠️ Supabase не подключён — сохраняем локально');
+
       var student = { fio: fio, class: cls, color: color, created: new Date().toISOString() };
       var students = JSON.parse(localStorage.getItem('students') || '[]');
       students.push(student);
       localStorage.setItem('students', JSON.stringify(students));
-      console.log('Зарегистрирован ученик:', student);
 
-      statusEl.textContent = '✅ Спасибо, ' + fio + '! Вы зарегистрированы.';
+      statusEl.textContent = '✅ Спасибо, ' + fio + '! Зарегистрированы (локально).';
       statusEl.className = 'review-status success';
 
       setTimeout(function() {
@@ -76,6 +115,5 @@
       }, 2000);
     });
   </script>
-  <script src="js/animations.js">
 </body>
 </html>
