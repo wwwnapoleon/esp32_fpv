@@ -184,8 +184,6 @@ function applyScrollAnimations() {
     '.how-step',
     '.tech-card',
     '.direction-card',
-    '.action-card',
-    '.blog-post',
     '.hero',
     '.join-section',
     '.cta-section'
