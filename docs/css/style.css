@@ -2667,3 +2667,28 @@ body.is-guest .role-badge {
     max-width: 100%;
   }
 }
+
+/* ============================================================
+   ЗАГОЛОВОК ПЕРЕД СТАТИСТИКОЙ
+   ============================================================ */
+
+.stats-header {
+  text-align: center;
+  margin: 60px 0 24px;
+}
+
+.stats-header .section-label {
+  margin-bottom: 0;
+  font-size: 13px;
+  letter-spacing: 4px;
+}
+
+@media (max-width: 600px) {
+  .stats-header {
+    margin: 40px 0 20px;
+  }
+  .stats-header .section-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+  }
+}
