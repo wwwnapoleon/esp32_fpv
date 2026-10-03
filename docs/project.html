@@ -216,22 +216,70 @@
       });
     });
 
-    // ---- Инициализация ----
-    (async function init() {
-      // Проверяем, кто пришёл
-      var admin = await getAdminUser();
-      var roleEl = document.getElementById('user-role');
+    // ============================================================
+//  ИНИЦИАЛИЗАЦИЯ — проверка прав
+// ============================================================
 
-      if (admin) {
-        roleEl.textContent = '👑 Админ';
-        document.body.classList.add('is-admin');
-      } else {
-        roleEl.textContent = '👀 Гость';
-      }
+(async function init() {
+  var admin = await getAdminUser();
+  var roleEl = document.getElementById('user-role');
+  var logoutBtn = document.getElementById('logout-btn');
 
-      loadDb();
-    })();
-  </script>
+  if (admin) {
+    // === АДМИН ===
+    roleEl.textContent = '👑 ' + (admin.email || 'admin');
+    document.body.classList.add('is-admin');
+
+    // Показываем кнопку выхода
+    if (logoutBtn) {
+      logoutBtn.style.display = 'inline-flex';
+      logoutBtn.addEventListener('click', logoutAdmin);
+    }
+
+    // Показываем блоки для админа
+    document.querySelectorAll('.admin-only').forEach(function(el) {
+      el.style.display = 'block';
+    });
+
+    // Подключаем управление серво
+    initServoControls();
+
+  } else {
+    // === ГОСТЬ ===
+    roleEl.textContent = '👀 Гость (только просмотр)';
+    document.body.classList.add('is-guest');
+    // Кнопки .admin-only остаются скрытыми
+  }
+
+  loadDb();
+})();
+
+// ---- Управление серво (только для админа) ----
+function initServoControls() {
+  var pan  = document.getElementById('pan');
+  var tilt = document.getElementById('tilt');
+  var panV  = document.getElementById('pan-val');
+  var tiltV = document.getElementById('tilt-val');
+
+  if (!pan || !tilt) return;
+
+  var timer = null;
+
+  function sendServo() {
+    if (panV)  panV.textContent  = pan.value + '°';
+    if (tiltV) tiltV.textContent = tilt.value + '°';
+
+    if (timer) return;
+    timer = setTimeout(function() {
+      timer = null;
+      fetch(CAMERA_URL + '/servo?pan=' + pan.value + '&tilt=' + tilt.value)
+        .catch(function() {});
+    }, 80);
+  }
+
+  pan.addEventListener('input', sendServo);
+  tilt.addEventListener('input', sendServo);
+}
 
 </body>
 </html>
