@@ -2069,53 +2069,85 @@ details.blog-post > summary.animate-on-scroll.visible {
 }
 
 /* ============================================================
-   QR-БЛОК — доступ к проекту
+   QR-БЛОК — доступ к проекту (компактный)
    ============================================================ */
 
 .qr-access-section {
-  margin: 50px 0;
-  padding: 40px 32px;
+  margin: 60px 0 100px;              /* ← большой отступ снизу */
+  padding: 0;
+}
+
+.qr-access-inner {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 40px;
+  align-items: center;
   background:
     linear-gradient(135deg, rgba(63,185,80,0.08), rgba(46,160,67,0.03)),
     var(--bg-2);
   border: 1px solid var(--green);
   border-radius: 20px;
+  padding: 36px 40px;
   position: relative;
   overflow: hidden;
 }
 
-.qr-access-section::before {
+.qr-access-inner::before {
   content: '';
   position: absolute;
   top: -50%;
   right: -20%;
-  width: 400px;
-  height: 400px;
+  width: 300px;
+  height: 300px;
   background: radial-gradient(circle, rgba(63,185,80,0.12), transparent 70%);
   pointer-events: none;
 }
 
-.qr-access-section h2 {
-  font-size: 26px;
+/* Текстовая часть */
+.qr-access-text {
+  position: relative;
+  min-width: 0;
+}
+
+.qr-access-text .section-label {
+  margin-bottom: 12px;
+}
+
+.qr-access-text h2 {
+  font-size: 24px;
   color: var(--green);
   margin: 0 0 12px;
-  position: relative;
+  line-height: 1.3;
 }
 
-.qr-access-section .lead {
+.qr-access-text p {
   font-size: 15px;
   color: var(--text);
-  max-width: 620px;
-  margin-bottom: 32px;
-  position: relative;
+  line-height: 1.6;
+  margin: 0 0 20px;
+  max-width: 480px;
 }
 
-.qr-access-block {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 32px;
-  align-items: center;
+/* Список фич */
+.qr-access-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 22px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+.qr-access-features li {
+  font-size: 13px;
+  color: var(--text-dim);
+  padding: 4px 0;
+}
+
+/* QR-часть */
+.qr-access-code {
+  text-align: center;
   position: relative;
+  flex-shrink: 0;
 }
 
 .qr-access-image-link {
@@ -2127,75 +2159,71 @@ details.blog-post > summary.animate-on-scroll.visible {
 }
 
 .qr-access-image {
-  width: 260px;
-  height: 260px;
+  width: 180px;                       /* ← МЕНЬШЕ (было 260) */
+  height: 180px;
   background: #fff;
-  padding: 12px;
-  border-radius: 16px;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+  padding: 10px;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
   display: block;
 }
 
-.qr-access-text h3 {
-  font-size: 15px;
-  color: var(--text);
-  margin: 0 0 14px;
+.qr-access-hint {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-top: 10px;
   text-transform: uppercase;
   letter-spacing: 1px;
-  font-weight: 700;
-}
-
-.qr-access-text ul {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 20px;
-}
-.qr-access-text li {
-  font-size: 14px;
-  color: var(--text);
-  padding: 8px 0;
-  line-height: 1.5;
-  border-bottom: 1px solid var(--border);
-}
-.qr-access-text li:last-child {
-  border-bottom: none;
-}
-
-.qr-access-text .btn {
-  font-weight: 600;
+  font-weight: 500;
 }
 
 /* Планшет */
 @media (max-width: 900px) {
-  .qr-access-block {
+  .qr-access-inner {
     grid-template-columns: 1fr;
     text-align: center;
-    gap: 24px;
+    gap: 28px;
+    padding: 32px 24px;
+  }
+  .qr-access-text p {
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .qr-access-features {
+    justify-content: center;
+  }
+  .qr-access-code {
+    order: -1;                        /* QR сверху на мобильном */
   }
   .qr-access-image {
+    width: 160px;
+    height: 160px;
     margin: 0 auto;
-  }
-  .qr-access-text ul {
-    text-align: left;
-    max-width: 320px;
-    margin: 0 auto 20px;
   }
 }
 
 /* Мобильный */
 @media (max-width: 600px) {
   .qr-access-section {
-    padding: 28px 20px;
-    margin: 40px 0;
+    margin: 40px 0 70px;
   }
-  .qr-access-section h2 { font-size: 20px; }
-  .qr-access-section .lead { font-size: 14px; }
+  .qr-access-inner {
+    padding: 24px 18px;
+    border-radius: 16px;
+  }
+  .qr-access-text h2 { font-size: 20px; }
+  .qr-access-text p { font-size: 14px; }
+  .qr-access-features {
+    justify-content: center;
+  }
+  .qr-access-features li { font-size: 12px; }
   .qr-access-image {
-    width: 200px;
-    height: 200px;
-    padding: 10px;
+    width: 140px;
+    height: 140px;
   }
-  .qr-access-text h3 { font-size: 13px; }
-  .qr-access-text li { font-size: 13px; }
-  .qr-access-text .btn { width: 100%; }
+  .qr-access-text .btn {
+    width: 100%;
+    text-align: center;
+  }
 }
+
