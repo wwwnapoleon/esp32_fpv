@@ -39,20 +39,41 @@ async function loadPage(name) {
 }
 
 function attachPageHandlers(name) {
-  // Форма отзыва в ЖИЗЕ
-  const reviewForm = document.getElementById('review-form');
-  if (reviewForm) reviewForm.addEventListener('submit', handleReviewSubmit);
+  // Форма отзыва — только на странице ЖИЗЫ
+  if (name !== 'zhiza') return;
 
-  // Инициализация листьев на странице «Направления»
-  if (name === 'directions' && typeof window.initLeaves === 'function') {
-    window.initLeaves();
+  // Проверяем, что getUser определена (auth.js подключён)
+  if (typeof getUser !== 'function') {
+    console.warn('getUser не определена — auth.js не подключён');
+    return;
   }
 
-  // Перезапуск анимаций
-  if (typeof window.initScrollAnimations === 'function') {
-    requestAnimationFrame(() => {
-      window.initScrollAnimations();
-    });
+  const user = getUser();
+  const formBlock  = document.getElementById('review-form-block');
+  const lockedBlock = document.getElementById('review-locked');
+  const nameInput   = document.getElementById('review-name');
+  const reviewForm  = document.getElementById('review-form');
+
+  if (!formBlock || !lockedBlock) return;
+
+  if (user) {
+    // Залогинен — показываем форму
+    formBlock.style.display = 'block';
+    lockedBlock.style.display = 'none';
+
+    // Подставляем имя из профиля
+    if (nameInput && user.fio) {
+      nameInput.value = user.fio;
+    }
+
+    // Подключаем обработчик отправки
+    if (reviewForm && typeof handleReviewSubmit === 'function') {
+      reviewForm.addEventListener('submit', handleReviewSubmit);
+    }
+  } else {
+    // Не залогинен — показываем заглушку
+    formBlock.style.display = 'none';
+    lockedBlock.style.display = 'block';
   }
 }
 
