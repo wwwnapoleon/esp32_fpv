@@ -2693,46 +2693,4 @@ body.is-guest .role-badge {
   }
 }
 
-/* ============================================================
-   ФИНАЛЬНОЕ ПРАВИЛО — перебивает все дубли выше
-   ============================================================ */
 
-.animate-on-scroll {
-  opacity: 0 !important;
-  transform: translateY(30px) !important;
-  transition:
-    opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1) !important;
-  will-change: opacity, transform;
-}
-
-.animate-on-scroll.visible {
-  opacity: 1 !important;
-  transform: translateY(0) !important;
-  will-change: auto;
-}
-
-/* Отключение для details (акции, жиза) — они НЕ должны быть opacity: 0 */
-details.action-card.animate-on-scroll,
-details.blog-post.animate-on-scroll,
-details.direction-card.animate-on-scroll {
-  opacity: 1 !important;
-  transform: none !important;
-}
-
-details.action-card.animate-on-scroll > summary,
-details.blog-post.animate-on-scroll > summary,
-details.direction-card.animate-on-scroll > summary {
-  opacity: 0;
-  transform: translateY(20px);
-  transition:
-    opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-details.action-card.animate-on-scroll.visible > summary,
-details.blog-post.animate-on-scroll.visible > summary,
-details.direction-card.animate-on-scroll.visible > summary {
-  opacity: 1;
-  transform: translateY(0);
-}
