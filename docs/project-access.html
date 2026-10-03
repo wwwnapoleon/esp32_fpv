@@ -26,52 +26,76 @@
 
     <div class="access-hero">
       <div class="section-label">Виртуальное зрение</div>
-      <h1>📱 Открой проект со смартфона</h1>
+      <h1>🏫 Доступ к проекту</h1>
       <p class="lead">
-        Наведи камеру телефона на QR-код — откроется прямая трансляция
-        с FPV-камеры робота и база данных проекта.
+        Два способа входа: <strong>гость по QR-коду</strong> (только просмотр)
+        и <strong>админ по email + паролю</strong> (с полными правами).
       </p>
     </div>
 
-    <div class="access-card">
+    <!-- ДВЕ КАРТОЧКИ: QR + АДМИН -->
+    <div class="access-grid">
 
-      <div class="access-text">
-        <h2>Что откроется:</h2>
+      <!-- Гость по QR -->
+      <div class="access-card access-card--guest">
+        <div class="access-card-header">
+          <div class="access-card-icon">📱</div>
+          <div>
+            <h2>Вход для гостей</h2>
+            <p class="access-card-subtitle">По QR-коду</p>
+          </div>
+        </div>
+
+        <div class="access-qr-wrap">
+          <a href="project.html" class="access-qr-link">
+            <img src="images/qr.png" alt="QR-код проекта" class="access-qr"
+                 onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=10&data=' + encodeURIComponent(location.origin + location.pathname.replace('project-access.html','') + 'project.html')">
+          </a>
+          <div class="access-hint">Наведи камеру телефона</div>
+        </div>
+
         <ul class="access-features">
-          <li>
-            <span class="access-feature-icon">📹</span>
-            <div>
-              <strong>FPV-камера робота</strong>
-              <p>Прямая трансляция с ESP32-S3 в реальном времени</p>
-            </div>
-          </li>
-          <li>
-            <span class="access-feature-icon">🗄️</span>
-            <div>
-              <strong>База данных проекта</strong>
-              <p>Все зарегистрированные участники</p>
-            </div>
-          </li>
-          <li>
-            <span class="access-feature-icon">👀</span>
-            <div>
-              <strong>Без регистрации</strong>
-              <p>Просмотр доступен всем</p>
-            </div>
-          </li>
+          <li>📹 FPV-камера робота</li>
+          <li>🗄️ База данных проекта</li>
+          <li>👀 Только просмотр</li>
         </ul>
 
-        <a href="project.html" class="btn btn-primary btn-lg">
-          Открыть в браузере →
+        <a href="project.html?role=guest" class="btn btn-primary">
+          Открыть как гость →
         </a>
       </div>
 
-      <div class="access-code">
-        <a href="project.html" class="access-qr-link">
-          <img src="images/qr.png" alt="QR-код проекта" class="access-qr"
-               onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=10&data=' + encodeURIComponent(location.origin + location.pathname.replace('project-access.html','') + 'project.html')">
-        </a>
-        <div class="access-hint">Наведи камеру телефона</div>
+      <!-- Админ по email -->
+      <div class="access-card access-card--admin">
+        <div class="access-card-header">
+          <div class="access-card-icon">👑</div>
+          <div>
+            <h2>Вход для админа</h2>
+            <p class="access-card-subtitle">Email + пароль</p>
+          </div>
+        </div>
+
+        <form id="admin-login" class="access-admin-form" autocomplete="off">
+          <div class="input-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" placeholder="admin@eco-school.ru" required>
+          </div>
+
+          <div class="input-group">
+            <label for="password">Пароль</label>
+            <input type="password" id="password" placeholder="••••••••" required>
+          </div>
+
+          <button type="submit" class="btn btn-primary">Войти как админ</button>
+        </form>
+
+        <p id="login-error" class="error"></p>
+
+        <ul class="access-features access-features--admin">
+          <li>📹 FPV-камера + управление серво</li>
+          <li>🗄️ Полный доступ к БД</li>
+          <li>✏️ Управление проектом</li>
+        </ul>
       </div>
 
     </div>
@@ -82,17 +106,59 @@
   <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
   <script>
+    // ---- Показать имя юзера в топбаре ----
     (function() {
       const user = getUser();
       const roleEl = document.getElementById('user-role');
       if (!roleEl) return;
-
       if (user) {
         roleEl.textContent = '👤 ' + (user.fio || 'Ученик');
       } else {
         roleEl.textContent = '👀 Гость';
       }
     })();
+
+    // ---- Вход админа ----
+    document.getElementById('admin-login').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const email    = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const errorEl  = document.getElementById('login-error');
+
+      errorEl.textContent = '⏳ Вход...';
+      errorEl.style.color = '';
+      errorEl.className = 'error';
+
+      if (!SB) {
+        errorEl.textContent = '⚠️ Supabase не настроен';
+        errorEl.style.color = '#f85149';
+        return;
+      }
+
+      try {
+        const { data, error } = await SB.auth.signInWithPassword({
+          email: email,
+          password: password
+        });
+
+        if (error) throw error;
+
+        console.log('✅ Админ вошёл:', data.user.email);
+
+        errorEl.textContent = '✅ Успешно! Переход...';
+        errorEl.style.color = '#3fb950';
+
+        setTimeout(() => {
+          window.location.href = 'project.html';
+        }, 800);
+
+      } catch (err) {
+        console.error('Login error:', err);
+        errorEl.textContent = '❌ ' + (err.message || 'Неверный логин или пароль');
+        errorEl.style.color = '#f85149';
+      }
+    });
   </script>
 
 </body>
