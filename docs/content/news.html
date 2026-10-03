@@ -45,29 +45,35 @@
     </div>
   </section>
 
-    <!-- QR-БЛОК: ДОСТУП К ПРОЕКТУ -->
+      <!-- QR-БЛОК: ДОСТУП К ПРОЕКТУ -->
   <section class="qr-access-section">
-    <div class="section-label">Доступ к проекту</div>
-    <h2>📱 Открой проект со смартфона</h2>
-    <p class="lead">
-      Наведи камеру телефона на QR-код — откроется прямая трансляция
-      с FPV-камеры робота и база данных проекта. Доступно всем, без регистрации.
-    </p>
+    <div class="qr-access-inner">
 
-    <div class="qr-access-block">
-      <a href="project.html" class="qr-access-image-link">
-        <img src="images/qr.png" alt="QR-код проекта" class="qr-access-image"
-             onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(location.origin + location.pathname.replace('content/news.html','') + 'project.html')">
-      </a>
       <div class="qr-access-text">
-        <h3>Что откроется:</h3>
-        <ul>
-          <li>📹 FPV-камера робота — прямая трансляция</li>
-          <li>🗄️ База данных проекта — все участники</li>
-          <li>👀 Только просмотр — без регистрации</li>
+        <div class="section-label">Доступ к проекту</div>
+        <h2>📱 Открой проект со смартфона</h2>
+        <p>
+          Наведи камеру телефона на QR-код — откроется прямая трансляция
+          с FPV-камеры робота и база данных проекта.
+        </p>
+        <ul class="qr-access-features">
+          <li>📹 FPV-камера — прямая трансляция</li>
+          <li>🗄️ База данных проекта</li>
+          <li>👀 Без регистрации</li>
         </ul>
-        <a href="project.html" class="btn btn-primary">Открыть в браузере →</a>
+        <a href="project.html" class="btn btn-primary">
+          Открыть в браузере →
+        </a>
       </div>
+
+      <div class="qr-access-code">
+        <a href="project.html" class="qr-access-image-link">
+          <img src="images/qr.png" alt="QR-код проекта" class="qr-access-image"
+               onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=10&data=' + encodeURIComponent(location.origin + location.pathname.replace('content/news.html','') + 'project.html')">
+        </a>
+        <div class="qr-access-hint">Наведи камеру</div>
+      </div>
+
     </div>
   </section>
   <!-- О проекте -->
