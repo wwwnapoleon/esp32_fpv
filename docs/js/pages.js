@@ -25,7 +25,14 @@ async function loadPage(name) {
     const html = await res.text();
     contentArea.innerHTML = html;
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    attachPageHandlers(name);
+
+    // Применяем анимации и счётчики после загрузки
+    setTimeout(function() {
+      applyScrollAnimations();
+      initCounters();
+      attachPageHandlers(name);
+    }, 100);
+
   } catch (err) {
     console.error('Ошибка загрузки:', err);
     contentArea.innerHTML = `
@@ -38,18 +45,21 @@ async function loadPage(name) {
   }
 }
 
+// ============================================================
+//  Обработчики страниц
+// ============================================================
+
 function attachPageHandlers(name) {
   // Форма отзыва — только на странице ЖИЗЫ
   if (name !== 'zhiza') return;
 
-  // Проверяем, что getUser определена (auth.js подключён)
   if (typeof getUser !== 'function') {
     console.warn('getUser не определена — auth.js не подключён');
     return;
   }
 
   const user = getUser();
-  const formBlock  = document.getElementById('review-form-block');
+  const formBlock   = document.getElementById('review-form-block');
   const lockedBlock = document.getElementById('review-locked');
   const nameInput   = document.getElementById('review-name');
   const reviewForm  = document.getElementById('review-form');
@@ -57,42 +67,39 @@ function attachPageHandlers(name) {
   if (!formBlock || !lockedBlock) return;
 
   if (user) {
-    // Залогинен — показываем форму
     formBlock.style.display = 'block';
     lockedBlock.style.display = 'none';
 
-    // Подставляем имя из профиля
     if (nameInput && user.fio) {
       nameInput.value = user.fio;
     }
 
-    // Подключаем обработчик отправки
     if (reviewForm && typeof handleReviewSubmit === 'function') {
       reviewForm.addEventListener('submit', handleReviewSubmit);
     }
   } else {
-    // Не залогинен — показываем заглушку
     formBlock.style.display = 'none';
     lockedBlock.style.display = 'block';
   }
 }
 
+// ============================================================
+//  Отправка отзыва
+// ============================================================
+
 async function handleReviewSubmit(e) {
   e.preventDefault();
 
-  // Берём имя из профиля (localStorage)
   const user = getUser();
   const message = document.getElementById('review-message').value.trim();
   const status  = document.getElementById('review-status');
 
-  // Проверка: залогинен ли ученик
   if (!user) {
     status.textContent = '🔒 Войдите, чтобы отправить отзыв';
     status.className = 'review-status error';
     return;
   }
 
-  // Проверка: не пустое ли сообщение
   if (!message) {
     status.textContent = '⚠️ Введите сообщение';
     status.className = 'review-status error';
@@ -101,7 +108,6 @@ async function handleReviewSubmit(e) {
 
   const name = user.fio || 'Аноним';
 
-  // ---- Supabase: сохраняем в облако ----
   if (SB) {
     status.textContent = '⏳ Отправка...';
     status.className = 'review-status';
@@ -116,7 +122,6 @@ async function handleReviewSubmit(e) {
       status.textContent = '✅ Спасибо, ' + name + '! Отзыв отправлен на модерацию.';
       status.className = 'review-status success';
 
-      // Очищаем только textarea — имя readonly
       document.getElementById('review-message').value = '';
 
       setTimeout(function() {
@@ -132,7 +137,7 @@ async function handleReviewSubmit(e) {
     return;
   }
 
-  // ---- Демо-режим (без Supabase) ----
+  // Демо-режим
   console.log('Отзыв (демо):', { name, message });
   status.textContent = '✅ Спасибо, ' + name + '! Отзыв отправлен (демо).';
   status.className = 'review-status success';
@@ -144,6 +149,10 @@ async function handleReviewSubmit(e) {
   }, 5000);
 }
 
+// ============================================================
+//  Меню навигации
+// ============================================================
+
 document.querySelectorAll('.menu-item[data-page]').forEach(btn => {
   btn.addEventListener('click', () => {
     const page = btn.getAttribute('data-page');
@@ -152,30 +161,30 @@ document.querySelectorAll('.menu-item[data-page]').forEach(btn => {
     document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
     btn.classList.add('active');
 
-    if (window.innerWidth < 1024) closeMenu();
+    if (window.innerWidth < 1024 && typeof closeMenu === 'function') closeMenu();
   });
 });
 
 // ============================================================
-//  Анимации при скролле — карточки выезжают при появлении
+//  Анимации при скролле
 // ============================================================
 
 const scrollObserver = new IntersectionObserver((entries) => {
   entries.forEach((entry, index) => {
     if (entry.isIntersecting) {
-      // Задержка по очереди — 80ms
+      // Задержка — максимум 4 элемента (320ms)
+      const delay = Math.min(index, 4) * 80;
       setTimeout(() => {
         entry.target.classList.add('visible');
-      }, index * 80);
+      }, delay);
       scrollObserver.unobserve(entry.target);
     }
   });
 }, {
-  threshold: 0.1,
-  rootMargin: '0px 0px -40px 0px'
+  threshold: 0,                      // ← было 0.1 — срабатывает раньше
+  rootMargin: '0px 0px -20px 0px'    // ← было -40px
 });
 
-// Применить ко всем «анимируемым» элементам
 function applyScrollAnimations() {
   const selectors = [
     '.news-card',
@@ -210,14 +219,12 @@ function animateCounter(el) {
   if (isNaN(target)) return;
 
   const suffix = el.getAttribute('data-suffix') || '';
-  const duration = 2500;             // миллисекунд
+  const duration = 2500;
   const startTime = performance.now();
 
   function update(now) {
     const elapsed = now - startTime;
     const progress = Math.min(elapsed / duration, 1);
-
-    // Плавное замедление в конце (easeOutQuart)
     const eased = 1 - Math.pow(1 - progress, 4);
     const current = Math.round(target * eased);
 
@@ -233,7 +240,6 @@ function animateCounter(el) {
   requestAnimationFrame(update);
 }
 
-// Запуск при появлении в зоне видимости
 const counterObserver = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     if (entry.isIntersecting) {
@@ -242,12 +248,11 @@ const counterObserver = new IntersectionObserver((entries) => {
     }
   });
 }, {
-  threshold: 0.5
+  threshold: 0.3
 });
 
 function initCounters() {
-  document.querySelectorAll('.stat-value[data-target]').forEach(el => {
-    // Сбросить на 0 перед стартом
+  document.querySelectorAll('.stat-value[data-target], .stat-number[data-target]').forEach(el => {
     el.textContent = '0' + (el.getAttribute('data-suffix') || '');
     counterObserver.observe(el);
   });
@@ -259,30 +264,4 @@ function initCounters() {
 
 document.addEventListener('DOMContentLoaded', () => {
   loadPage('news');
-  setTimeout(() => {
-    applyScrollAnimations();
-    initCounters();
-  }, 300);
 });
-
-// Переопределить loadPage, чтобы счётчики запускались и на других страницах
-if (typeof loadPage === 'function') {
-  const originalFn = loadPage;
-  window.loadPage = async function(name) {
-    await originalFn(name);
-    setTimeout(() => {
-      applyScrollAnimations();
-      initCounters();
-    }, 200);
-  };
-}
-
-// И после каждой загрузки раздела
-const originalLoadPage = window.loadPage;
-if (typeof loadPage === 'function') {
-  const originalFn = loadPage;
-  window.loadPage = async function(name) {
-    await originalFn(name);
-    setTimeout(applyScrollAnimations, 200);
-  };
-}
