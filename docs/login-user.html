@@ -1,0 +1,22 @@
+<!-- QR-блок для всех -->
+<section class="qr-access-section">
+  <div class="section-label">Доступ к проекту</div>
+  <h2>📱 Открой проект</h2>
+  <p class="lead">
+    Наведи камеру телефона на QR-код, чтобы увидеть прямую трансляцию
+    с FPV-камеры робота и базу данных проекта.
+  </p>
+  <div class="qr-access-block">
+    <img src="images/qr.png" alt="QR-код проекта" class="qr-access-image"
+         onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(location.origin + location.pathname.replace('index.html','project.html'))">
+    <div class="qr-access-text">
+      <h3>Что откроется:</h3>
+      <ul>
+        <li>📹 FPV-камера робота</li>
+        <li>🗄️ База данных проекта</li>
+        <li>👀 Только просмотр</li>
+      </ul>
+      <a href="project.html" class="btn btn-primary">Открыть в браузере →</a>
+    </div>
+  </div>
+</section>
