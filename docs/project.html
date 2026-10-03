@@ -56,6 +56,20 @@
         </a>
         <span id="fpv-status" class="project-status">FPS: —</span>
       </div>
+      <!-- Управление серво — только для админа -->
+      <div class="servo-controls admin-only" style="display: none;">
+        <h3>🎛️ Управление серво</h3>
+        <div class="row">
+          <label>PAN</label>
+          <input type="range" id="pan" min="0" max="180" value="90">
+          <span id="pan-val">90°</span>
+        </div>
+        <div class="row">
+          <label>TILT</label>
+          <input type="range" id="tilt" min="0" max="180" value="90">
+          <span id="tilt-val">90°</span>
+        </div>
+      </div>
     </section>
 
     <!-- БЛОК 2: База данных -->
