@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Доступ к проекту · ЭКО-ШКОЛА</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📱</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/redesign.css">
+</head>
+<body class="access-page">
+
+  <header class="topbar">
+    <a href="index.html" class="btn-back">← На главную</a>
+    <div class="brand">
+      <span class="logo-icon">📱</span>
+      <span>Доступ к проекту</span>
+    </div>
+    <span id="user-role" class="role-badge"></span>
+  </header>
+
+  <main class="access-main">
+
+    <div class="access-hero">
+      <div class="section-label">Виртуальное зрение</div>
+      <h1>📱 Открой проект со смартфона</h1>
+      <p class="lead">
+        Наведи камеру телефона на QR-код — откроется прямая трансляция
+        с FPV-камеры робота и база данных проекта.
+      </p>
+    </div>
+
+    <div class="access-card">
+
+      <div class="access-text">
+        <h2>Что откроется:</h2>
+        <ul class="access-features">
+          <li>
+            <span class="access-feature-icon">📹</span>
+            <div>
+              <strong>FPV-камера робота</strong>
+              <p>Прямая трансляция с ESP32-S3 в реальном времени</p>
+            </div>
+          </li>
+          <li>
+            <span class="access-feature-icon">🗄️</span>
+            <div>
+              <strong>База данных проекта</strong>
+              <p>Все зарегистрированные участники</p>
+            </div>
+          </li>
+          <li>
+            <span class="access-feature-icon">👀</span>
+            <div>
+              <strong>Без регистрации</strong>
+              <p>Просмотр доступен всем</p>
+            </div>
+          </li>
+        </ul>
+
+        <a href="project.html" class="btn btn-primary btn-lg">
+          Открыть в браузере →
+        </a>
+      </div>
+
+      <div class="access-code">
+        <a href="project.html" class="access-qr-link">
+          <img src="images/qr.png" alt="QR-код проекта" class="access-qr"
+               onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=10&data=' + encodeURIComponent(location.origin + location.pathname.replace('project-access.html','') + 'project.html')">
+        </a>
+        <div class="access-hint">Наведи камеру телефона</div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    (function() {
+      const user = getUser();
+      const roleEl = document.getElementById('user-role');
+      if (!roleEl) return;
+
+      if (user) {
+        roleEl.textContent = '👤 ' + (user.fio || 'Ученик');
+      } else {
+        roleEl.textContent = '👀 Гость';
+      }
+    })();
+  </script>
+
+</body>
+</html>
