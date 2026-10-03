@@ -56,18 +56,68 @@ function attachPageHandlers(name) {
   }
 }
 
-function handleReviewSubmit(e) {
+async function handleReviewSubmit(e) {
   e.preventDefault();
-  const name    = document.getElementById('review-name').value;
-  const message = document.getElementById('review-message').value;
+
+  // Берём имя из профиля (localStorage)
+  const user = getUser();
+  const message = document.getElementById('review-message').value.trim();
   const status  = document.getElementById('review-status');
 
-  console.log('Отзыв:', { name, message });
-  status.textContent = '✅ Спасибо, ' + name + '! Отзыв отправлен.';
-  status.className = 'review-status success';
-  e.target.reset();
+  // Проверка: залогинен ли ученик
+  if (!user) {
+    status.textContent = '🔒 Войдите, чтобы отправить отзыв';
+    status.className = 'review-status error';
+    return;
+  }
 
-  setTimeout(() => {
+  // Проверка: не пустое ли сообщение
+  if (!message) {
+    status.textContent = '⚠️ Введите сообщение';
+    status.className = 'review-status error';
+    return;
+  }
+
+  const name = user.fio || 'Аноним';
+
+  // ---- Supabase: сохраняем в облако ----
+  if (SB) {
+    status.textContent = '⏳ Отправка...';
+    status.className = 'review-status';
+
+    try {
+      const { error } = await SB
+        .from('reviews')
+        .insert([{ name: name, message: message }]);
+
+      if (error) throw error;
+
+      status.textContent = '✅ Спасибо, ' + name + '! Отзыв отправлен на модерацию.';
+      status.className = 'review-status success';
+
+      // Очищаем только textarea — имя readonly
+      document.getElementById('review-message').value = '';
+
+      setTimeout(function() {
+        status.textContent = '';
+        status.className = 'review-status';
+      }, 5000);
+
+    } catch (err) {
+      console.error('Supabase error:', err);
+      status.textContent = '❌ Ошибка: ' + err.message;
+      status.className = 'review-status error';
+    }
+    return;
+  }
+
+  // ---- Демо-режим (без Supabase) ----
+  console.log('Отзыв (демо):', { name, message });
+  status.textContent = '✅ Спасибо, ' + name + '! Отзыв отправлен (демо).';
+  status.className = 'review-status success';
+  document.getElementById('review-message').value = '';
+
+  setTimeout(function() {
     status.textContent = '';
     status.className = 'review-status';
   }, 5000);
