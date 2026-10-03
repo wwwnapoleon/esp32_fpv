@@ -1,22 +1,104 @@
-<!-- QR-блок для всех -->
-<section class="qr-access-section">
-  <div class="section-label">Доступ к проекту</div>
-  <h2>📱 Открой проект</h2>
-  <p class="lead">
-    Наведи камеру телефона на QR-код, чтобы увидеть прямую трансляцию
-    с FPV-камеры робота и базу данных проекта.
-  </p>
-  <div class="qr-access-block">
-    <img src="images/qr.png" alt="QR-код проекта" class="qr-access-image"
-         onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(location.origin + location.pathname.replace('index.html','project.html'))">
-    <div class="qr-access-text">
-      <h3>Что откроется:</h3>
-      <ul>
-        <li>📹 FPV-камера робота</li>
-        <li>🗄️ База данных проекта</li>
-        <li>👀 Только просмотр</li>
-      </ul>
-      <a href="project.html" class="btn btn-primary">Открыть в браузере →</a>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Вход ученика · ЭКО-ШКОЛА</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👤</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/redesign.css">
+</head>
+<body class="login-page">
+  <div class="login-container">
+
+    <div class="logo-block">
+      <h1>🌿 ЭКО-ШКОЛА</h1>
+      <p class="subtitle">Вход ученика</p>
     </div>
+
+    <form id="user-login" autocomplete="off">
+      <div class="input-group">
+        <label for="fio">ФИО</label>
+        <input type="text" id="fio" placeholder="Иванов Иван Иванович" required>
+      </div>
+
+      <div class="input-group">
+        <label for="color">Любимый цвет</label>
+        <input type="color" id="color" value="#3fb950">
+      </div>
+
+      <button type="submit" class="btn-primary">Войти</button>
+    </form>
+
+    <p id="login-status" class="error"></p>
+
+    <p class="footer-hint">
+      Нет аккаунта? <a href="register.html">Зарегистрироваться</a>
+    </p>
+
+    <a href="index.html" class="btn-back">← На главную</a>
   </div>
-</section>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script>
+    document.getElementById('user-login').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const fio   = document.getElementById('fio').value.trim();
+      const color = document.getElementById('color').value;
+      const statusEl = document.getElementById('login-status');
+
+      statusEl.textContent = '⏳ Проверка...';
+      statusEl.style.color = '';
+      statusEl.className = 'error';
+
+      if (!SB) {
+        statusEl.textContent = '⚠️ Supabase не настроен';
+        return;
+      }
+
+      try {
+        // Ищем ученика по ФИО + цвет
+        const { data, error } = await SB
+          .from('students')
+          .select('*')
+          .eq('fio', fio)
+          .eq('color', color)
+          .limit(1);
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+          statusEl.textContent = '❌ Ученик не найден. Проверьте данные или зарегистрируйтесь.';
+          statusEl.style.color = '#f85149';
+          return;
+        }
+
+        // Нашли — сохраняем в localStorage
+        const student = data[0];
+        localStorage.setItem('user', JSON.stringify({
+          fio: student.fio,
+          class: student.class,
+          color: student.color
+        }));
+
+        statusEl.textContent = '✅ Добро пожаловать, ' + student.fio + '!';
+        statusEl.style.color = '#3fb950';
+
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 1000);
+
+      } catch (err) {
+        console.error('Login error:', err);
+        statusEl.textContent = '❌ Ошибка: ' + err.message;
+        statusEl.style.color = '#f85149';
+      }
+    });
+  </script>
+</body>
+</html>
