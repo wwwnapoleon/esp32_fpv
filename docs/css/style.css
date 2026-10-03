@@ -2642,3 +2642,28 @@ body.is-guest .role-badge {
     font-size: 12px;
   }
 }
+
+/* ============================================================
+   HERO — одна кнопка на всю ширину
+   ============================================================ */
+
+.hero-actions--single {
+  display: block;
+  max-width: 320px;
+}
+
+.hero-actions--single .btn-wide {
+  width: 100%;
+  padding: 16px 32px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 12px;
+  text-align: center;
+  display: block;
+}
+
+@media (max-width: 700px) {
+  .hero-actions--single {
+    max-width: 100%;
+  }
+}
