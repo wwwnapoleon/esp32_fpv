@@ -2889,10 +2889,15 @@ body.is-guest .role-badge {
   inset: 0 !important;
   background: rgba(0,0,0,0.75) !important;
   z-index: 999 !important;
-  display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   padding: 20px !important;
+  /* display управляется классом .open — без !important */
+  display: none;
+}
+
+.modal.open {
+  display: flex;
 }
 
 .modal-content {
