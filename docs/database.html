@@ -21,7 +21,7 @@
     </div>
 
     <!-- Меню инструментов (только админ) -->
-    <nav class="tools-nav admin-only" id="tools-nav">
+    <nav class="tools-nav" id="tools-nav" style="display:none;">
       <button class="tools-btn" id="tools-toggle">
         🛠️ ИНСТРУМЕНТЫ ▾
       </button>
@@ -71,8 +71,8 @@
 
   </main>
 
-  <!-- Модальное окно «Выгрузки» -->
-  <div class="modal admin-only" id="exports-modal" style="display:none;">
+  <!-- Модальное окно «Выгрузки» — БЕЗ admin-only, управляется классом .open -->
+  <div class="modal" id="exports-modal">
     <div class="modal-content">
       <div class="modal-header">
         <h2>⬇️ Выгрузки из базы</h2>
@@ -281,32 +281,51 @@
       }).join('');
     }
 
-    // ---- Модальное окно ----
+    // ---- Меню инструментов (toggle) ----
+    var toolsToggle = document.getElementById('tools-toggle');
+    var toolsMenu = document.getElementById('tools-menu');
+
+    if (toolsToggle && toolsMenu) {
+      toolsToggle.addEventListener('click', function(e) {
+        e.stopPropagation();
+        toolsMenu.classList.toggle('open');
+      });
+      document.addEventListener('click', function() {
+        toolsMenu.classList.remove('open');
+      });
+    }
+
+    // ---- Модалка «Выгрузки» ----
+    var exportsModal = document.getElementById('exports-modal');
+
     document.getElementById('open-exports').addEventListener('click', function(e) {
       e.preventDefault();
-      document.getElementById('exports-modal').classList.add('open');
+      exportsModal.classList.add('open');
       renderExportHistory();
+      // Закрыть меню инструментов
+      if (toolsMenu) toolsMenu.classList.remove('open');
     });
 
     document.getElementById('close-exports').addEventListener('click', function() {
-      document.getElementById('exports-modal').classList.remove('open');
+      exportsModal.classList.remove('open');
     });
 
-    document.getElementById('exports-modal').addEventListener('click', function(e) {
-      if (e.target.id === 'exports-modal') {
-        this.classList.remove('open');
+    exportsModal.addEventListener('click', function(e) {
+      if (e.target === exportsModal) {
+        exportsModal.classList.remove('open');
       }
     });
 
     document.getElementById('export-xlsx-modal').addEventListener('click', function() {
       exportXlsx();
-      document.getElementById('exports-modal').classList.remove('open');
+      exportsModal.classList.remove('open');
     });
 
     document.getElementById('export-xml-modal').addEventListener('click', function() {
       exportXml();
-      document.getElementById('exports-modal').classList.remove('open');
+      exportsModal.classList.remove('open');
     });
+
     // ---- Кнопки выгрузки в toolbar ----
     var xlsxBtn = document.getElementById('db-export-xlsx');
     if (xlsxBtn) xlsxBtn.addEventListener('click', exportXlsx);
@@ -314,22 +333,9 @@
     var xmlBtn = document.getElementById('db-export-xml');
     if (xmlBtn) xmlBtn.addEventListener('click', exportXml);
 
-    // ---- Меню инструментов ----
-    var toolsBtn = document.getElementById('tools-toggle');
-    var toolsMenu = document.getElementById('tools-menu');
-
-    if (toolsBtn && toolsMenu) {
-      toolsBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        toolsMenu.classList.toggle('open');
-      });
-
-      document.addEventListener('click', function() {
-        toolsMenu.classList.remove('open');
-      });
-    }
-
-    // ---- Инициализация ----
+    // ============================================================
+    //  ИНИЦИАЛИЗАЦИЯ
+    // ============================================================
     (async function init() {
       var admin = null;
       try {
@@ -351,9 +357,18 @@
           });
         }
 
-        // Показать админ-элементы
+        // Показать админ-элементы (кроме модалки!)
         document.querySelectorAll('.admin-only').forEach(function(el) {
-          el.style.display = el.id === 'tools-nav' ? 'flex' : 'inline-block';
+          // Пропускаем модалку — она управляется классом .open
+          if (el.id === 'exports-modal') return;
+
+          if (el.id === 'tools-nav') {
+            el.style.display = 'flex';
+          } else if (el.tagName === 'BUTTON') {
+            el.style.display = 'inline-block';
+          } else {
+            el.style.removeProperty('display');
+          }
         });
 
       } else {
