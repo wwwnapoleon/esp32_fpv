@@ -2569,47 +2569,6 @@ body.is-guest .role-badge {
   border-color: var(--red);
 }
 
-/* Управление серво — только для админа */
-.admin-only {
-  display: none;
-}
-
-.servo-controls {
-  background: rgba(0, 0, 0, 0.25);
-  border: 1px solid var(--green);
-  border-radius: 12px;
-  padding: 18px 20px;
-  margin-top: 16px;
-}
-.servo-controls h3 {
-  font-size: 14px;
-  color: var(--green);
-  margin: 0 0 14px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-.servo-controls .row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 10px;
-}
-.servo-controls label {
-  width: 60px;
-  font-size: 13px;
-  color: var(--text-dim);
-  font-weight: 500;
-}
-.servo-controls input[type=range] {
-  flex: 1;
-  accent-color: var(--green);
-}
-.servo-controls span {
-  width: 50px;
-  text-align: right;
-  font-size: 13px;
-  color: var(--text);
-}
 
 /* Информация для гостя */
 .project-page.is-guest .project-block::after {
@@ -3180,4 +3139,31 @@ body.is-guest .role-badge {
   overflow-y: auto;
   padding: 28px;
   color: #e6edf3;
+}
+
+/* ============================================================
+   ADMIN-ONLY — скрыто для всех, видно только .is-admin
+   ============================================================ */
+
+.admin-only {
+  display: none !important;
+}
+
+/* Кнопки — inline-block для админа */
+body.is-admin .admin-only:not(#tools-nav):not(#exports-modal) {
+  display: inline-block !important;
+}
+
+/* Меню инструментов — flex */
+body.is-admin #tools-nav {
+  display: flex !important;
+}
+
+/* Модалка — только по классу .open */
+#exports-modal {
+  display: none !important;
+}
+
+#exports-modal.open {
+  display: flex !important;
 }
