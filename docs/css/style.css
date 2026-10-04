@@ -3167,3 +3167,58 @@ body.is-admin #tools-nav {
 #exports-modal.open {
   display: flex !important;
 }
+
+/* ============================================================
+   ФИНАЛЬНЫЕ ПРАВИЛА — admin-only, tools, modal (ПОБЕДИТЕЛЬ)
+   ⚠️ В САМОМ КОНЦЕ ФАЙЛА
+   ============================================================ */
+
+/* ---------- admin-only: ЖЁСТКО скрыто ---------- */
+
+.admin-only {
+  display: none !important;
+}
+
+/* Скрыть tools-nav по умолчанию */
+.tools-nav {
+  display: none !important;
+}
+
+/* Скрыть кнопки XLSX/XML по умолчанию */
+#db-export-xlsx,
+#db-export-xml {
+  display: none !important;
+}
+
+/* Скрыть модалку по умолчанию */
+#exports-modal {
+  display: none !important;
+}
+
+/* ---------- Показать ТОЛЬКО для is-admin ---------- */
+
+body.is-admin #tools-nav {
+  display: flex !important;
+}
+
+body.is-admin #db-export-xlsx,
+body.is-admin #db-export-xml {
+  display: inline-block !important;
+}
+
+body.is-admin #exports-modal.open {
+  display: flex !important;
+}
+
+/* Убедимся, что модалка закрыта, если нет .open */
+body.is-admin #exports-modal:not(.open) {
+  display: none !important;
+}
+
+/* ---------- Отменяем старые правила ---------- */
+
+body.is-guest .tools-nav,
+body.is-guest #db-export-xlsx,
+body.is-guest #db-export-xml {
+  display: none !important;
+}
