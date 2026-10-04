@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Проект · ЭКО-ШКОЛА</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏫</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/redesign.css">
+</head>
+<body class="project-page">
+
+  <header class="topbar">
+    <a href="index.html" class="btn-back">← На главную</a>
+    <div class="brand">
+      <span class="logo-icon">🏫</span>
+      <span>Проект · Виртуальное зрение</span>
+    </div>
+    <div class="topbar-actions">
+      <span id="user-role" class="role-badge">…</span>
+      <button id="logout-btn" class="btn-logout" style="display:none;">Выйти</button>
+    </div>
+  </header>
+
+  <main class="project-main">
+
+    <h1>🏫 Страница проекта</h1>
+    <p class="lead">
+      Прямой доступ к FPV-камере робота и базе данных проекта.
+      Выберите раздел:
+    </p>
+
+    <div class="project-grid">
+
+      <!-- БЛОК 1: FPV камера -->
+      <a href="fpv.html" class="project-tile project-tile--fpv">
+        <div class="project-tile-icon">📹</div>
+        <h2>FPV камера</h2>
+        <p class="project-tile-sub">Прямая трансляция</p>
+        <p class="project-tile-desc">
+          Поток с камеры ESP32-S3 в реальном времени.
+        </p>
+        <ul class="project-tile-features">
+          <li>📹 Трансляция с робота</li>
+          <li>📸 Снимок (админ)</li>
+          <li>📊 FPS / RSSI (админ)</li>
+        </ul>
+        <span class="btn btn-primary">Открыть FPV →</span>
+      </a>
+
+      <!-- БЛОК 2: База данных -->
+      <a href="database.html" class="project-tile project-tile--db">
+        <div class="project-tile-icon">🗄️</div>
+        <h2>База данных</h2>
+        <p class="project-tile-sub">ЭКО-ШКОЛА</p>
+        <p class="project-tile-desc">
+          Все регистрации участников. Поиск, фильтры, выгрузка.
+        </p>
+        <ul class="project-tile-features">
+          <li>🗄️ Список участников</li>
+          <li>🔍 Поиск по ФИО / классу</li>
+          <li>⬇️ Выгрузка XLSX / XML (админ)</li>
+        </ul>
+        <span class="btn btn-primary">Открыть БД →</span>
+      </a>
+
+    </div>
+
+    <!-- Ссылка на вход для админа (если не залогинен) -->
+    <div class="project-admin-link" id="admin-link" style="display:none;">
+      <span>👑 Вход для админа:</span>
+      <a href="admin-login.html">войти по email + паролю</a>
+    </div>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    (async function init() {
+      var admin = null;
+      try {
+        if (typeof getAdminUser === 'function') admin = await getAdminUser();
+      } catch(e) {}
+
+      var user = getUser();
+      var roleEl = document.getElementById('user-role');
+      var logoutBtn = document.getElementById('logout-btn');
+      var adminLink = document.getElementById('admin-link');
+
+      if (admin) {
+        if (roleEl) roleEl.textContent = '👑 ' + (admin.email || 'admin');
+        document.body.classList.add('is-admin');
+
+        if (logoutBtn) {
+          logoutBtn.style.display = 'inline-flex';
+          logoutBtn.addEventListener('click', function() {
+            if (typeof logoutAdmin === 'function') logoutAdmin();
+          });
+        }
+      } else if (user) {
+        if (roleEl) roleEl.textContent = '👤 ' + (user.fio || 'Ученик');
+        document.body.classList.add('is-user');
+      } else {
+        if (roleEl) roleEl.textContent = '👀 Гость';
+        document.body.classList.add('is-guest');
+        if (adminLink) adminLink.style.display = 'block';
+      }
+    })();
+  </script>
+
+</body>
+</html>
