@@ -4,62 +4,367 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>База данных · ЭКО-ШКОЛА</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
-  <!-- Шрифты (для редизайна) -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗄️</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-  <!-- Стили: сначала базовые, потом редизайн -->
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/redesign.css">
 </head>
 <body class="database-page">
 
   <header class="topbar">
-    <a href="project-page.html" class="btn-back">← Назад</a>
+    <a href="project-page.html" class="btn-back">← К проекту</a>
     <div class="brand">
       <span class="logo-icon">🗄️</span>
-      <span class="brand-name">ЭКО-ШКОЛА</span>
+      <span>База данных</span>
     </div>
-    <span id="user-role" class="role-badge"></span>
+
+    <!-- Меню инструментов (только админ) -->
+    <nav class="tools-nav admin-only" id="tools-nav" style="display:none;">
+      <button class="tools-btn" id="tools-toggle">
+        🛠️ ИНСТРУМЕНТЫ ▾
+      </button>
+      <div class="tools-menu" id="tools-menu">
+        <a href="#" class="tools-item" id="open-exports">
+          ⬇️ Выгрузки
+        </a>
+      </div>
+    </nav>
+
+    <div class="topbar-actions">
+      <span id="user-role" class="role-badge">…</span>
+      <button id="logout-btn" class="btn-logout" style="display:none;">Выйти</button>
+    </div>
   </header>
 
   <main class="database-main">
-    <h1>База данных «ЭКО-ШКОЛА»</h1>
-    <p class="subtitle">Экологические проекты лицея №8</p>
 
-    <div class="toolbar">
-      <input type="text" id="search" placeholder="🔍 Поиск по названию...">
-      <button id="refresh" class="btn">🔄 Обновить</button>
-      <button id="add-row" class="btn btn-admin" style="display:none;">
-        ➕ Добавить запись
+    <h1>🗄️ База данных · ЭКО-ШКОЛА</h1>
+    <p class="lead" id="db-count">Загрузка...</p>
+
+    <div class="db-toolbar">
+      <input type="text" id="db-search" placeholder="🔍 Поиск по ФИО или классу...">
+      <button id="db-refresh" class="btn">🔄 Обновить</button>
+      <button id="db-export-xlsx" class="btn btn-primary admin-only" style="display:none;">
+        ⬇️ XLSX
+      </button>
+      <button id="db-export-xml" class="btn btn-primary admin-only" style="display:none;">
+        ⬇️ XML
       </button>
     </div>
 
-    <div id="db-status" class="status"></div>
-
-    <table class="data-table" id="data-table">
+    <table class="data-table" id="db-table">
       <thead>
         <tr>
-          <th>ID</th>
-          <th>Название проекта</th>
-          <th>Участники</th>
+          <th>#</th>
+          <th>ФИО</th>
+          <th>Класс</th>
+          <th>Цвет</th>
           <th>Дата</th>
-          <th>Статус</th>
-          <th class="col-admin" style="display:none;">Действия</th>
         </tr>
       </thead>
-      <tbody id="data-body">
-        <tr><td colspan="6" class="empty">Загрузка...</td></tr>
+      <tbody id="db-body">
+        <tr><td colspan="5" class="empty">Загрузка...</td></tr>
       </tbody>
     </table>
 
   </main>
 
+  <!-- Модальное окно «Выгрузки» -->
+  <div class="modal admin-only" id="exports-modal" style="display:none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>⬇️ Выгрузки из базы</h2>
+        <button class="modal-close" id="close-exports">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <p>Выгрузка всех записей из таблицы <code>students</code>.</p>
+
+        <div class="export-options">
+          <button class="export-card" id="export-xlsx-modal">
+            <div class="export-icon">📊</div>
+            <h3>XLSX (Excel)</h3>
+            <p>Открыть в Excel, Google Sheets</p>
+          </button>
+
+          <button class="export-card" id="export-xml-modal">
+            <div class="export-icon">📄</div>
+            <h3>XML</h3>
+            <p>Для программной обработки</p>
+          </button>
+        </div>
+
+        <h4>История выгрузок</h4>
+        <ul class="export-history" id="export-history">
+          <li class="empty">Пока нет выгрузок</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Библиотека для XLSX -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
-  <script src="js/db.js"></script>
+  <script>
+    var isAdmin = false;
+    var currentRows = [];
+
+    // ---- Загрузка БД ----
+    async function loadDb() {
+      var tbody = document.getElementById('db-body');
+      var countEl = document.getElementById('db-count');
+
+      if (!tbody) return;
+
+      if (typeof SB === 'undefined' || !SB) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty">Supabase не настроен</td></tr>';
+        return;
+      }
+
+      try {
+        var result = await SB
+          .from('students')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (result.error) throw result.error;
+
+        currentRows = result.data || [];
+        if (countEl) countEl.textContent = 'Всего записей: ' + currentRows.length;
+
+        if (currentRows.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="empty">Нет регистраций</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = currentRows.map(function(r, i) {
+          return '<tr>' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td><strong>' + escapeHtml(r.fio) + '</strong></td>' +
+            '<td>' + escapeHtml(r.class) + '</td>' +
+            '<td><span style="display:inline-block;width:16px;height:16px;border-radius:4px;background:' + r.color + ';vertical-align:middle;"></span> ' + r.color + '</td>' +
+            '<td>' + formatDate(r.created_at) + '</td>' +
+            '</tr>';
+        }).join('');
+
+      } catch (err) {
+        console.error('DB error:', err);
+        tbody.innerHTML = '<tr><td colspan="5" class="empty">Ошибка: ' + escapeHtml(err.message) + '</td></tr>';
+      }
+    }
+
+    function escapeHtml(s) {
+      if (!s) return '';
+      return String(s).replace(/[&<>"']/g, function(c) {
+        return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+      });
+    }
+
+    function formatDate(iso) {
+      if (!iso) return '—';
+      try {
+        var d = new Date(iso);
+        return d.toLocaleDateString('ru-RU') + ' ' +
+               d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+      } catch(e) { return iso; }
+    }
+
+    // ---- Поиск ----
+    document.getElementById('db-search').addEventListener('input', function(e) {
+      var q = e.target.value.toLowerCase();
+      document.querySelectorAll('#db-body tr').forEach(function(row) {
+        row.style.display = row.textContent.toLowerCase().indexOf(q) !== -1 ? '' : 'none';
+      });
+    });
+
+    document.getElementById('db-refresh').addEventListener('click', loadDb);
+
+    // ---- Выгрузка XLSX ----
+    function exportXlsx() {
+      if (!currentRows.length) {
+        alert('Нет данных для выгрузки');
+        return;
+      }
+
+      var data = currentRows.map(function(r, i) {
+        return {
+          '№': i + 1,
+          'ФИО': r.fio || '',
+          'Класс': r.class || '',
+          'Любимый цвет': r.color || '',
+          'Дата': formatDate(r.created_at)
+        };
+      });
+
+      var ws = XLSX.utils.json_to_sheet(data);
+      var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Ученики');
+
+      var date = new Date().toISOString().slice(0, 10);
+      XLSX.writeFile(wb, 'eco-school-students-' + date + '.xlsx');
+
+      addExportHistory('XLSX', data.length);
+    }
+
+    // ---- Выгрузка XML ----
+    function exportXml() {
+      if (!currentRows.length) {
+        alert('Нет данных для выгрузки');
+        return;
+      }
+
+      var xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+      xml += '<students>\n';
+      currentRows.forEach(function(r) {
+        xml += '  <student>\n';
+        xml += '    <fio>' + escapeXml(r.fio) + '</fio>\n';
+        xml += '    <class>' + escapeXml(r.class) + '</class>\n';
+        xml += '    <color>' + escapeXml(r.color) + '</color>\n';
+        xml += '    <created_at>' + escapeXml(r.created_at) + '</created_at>\n';
+        xml += '  </student>\n';
+      });
+      xml += '</students>';
+
+      var blob = new Blob([xml], { type: 'application/xml' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'eco-school-students-' + new Date().toISOString().slice(0, 10) + '.xml';
+      a.click();
+      URL.revokeObjectURL(url);
+
+      addExportHistory('XML', currentRows.length);
+    }
+
+    function escapeXml(s) {
+      if (!s) return '';
+      return String(s).replace(/[<>&"']/g, function(c) {
+        return { '<':'&lt;', '>':'&gt;', '&':'&amp;', '"':'&quot;', "'":'&apos;' }[c];
+      });
+    }
+
+    // ---- История выгрузок ----
+    function addExportHistory(type, count) {
+      var history = JSON.parse(localStorage.getItem('exportHistory') || '[]');
+      history.unshift({
+        type: type,
+        count: count,
+        date: new Date().toISOString()
+      });
+      history = history.slice(0, 10);
+      localStorage.setItem('exportHistory', JSON.stringify(history));
+      renderExportHistory();
+    }
+
+    function renderExportHistory() {
+      var list = document.getElementById('export-history');
+      if (!list) return;
+
+      var history = JSON.parse(localStorage.getItem('exportHistory') || '[]');
+
+      if (!history.length) {
+        list.innerHTML = '<li class="empty">Пока нет выгрузок</li>';
+        return;
+      }
+
+      list.innerHTML = history.map(function(h) {
+        return '<li>' +
+          '<span class="export-type">' + h.type + '</span>' +
+          '<span>' + h.count + ' записей</span>' +
+          '<span class="export-date">' + formatDate(h.date) + '</span>' +
+          '</li>';
+      }).join('');
+    }
+
+    // ---- Модальное окно ----
+    document.getElementById('open-exports').addEventListener('click', function(e) {
+      e.preventDefault();
+      document.getElementById('exports-modal').style.display = 'flex';
+      renderExportHistory();
+    });
+
+    document.getElementById('close-exports').addEventListener('click', function() {
+      document.getElementById('exports-modal').style.display = 'none';
+    });
+
+    document.getElementById('exports-modal').addEventListener('click', function(e) {
+      if (e.target.id === 'exports-modal') {
+        this.style.display = 'none';
+      }
+    });
+
+    document.getElementById('export-xlsx-modal').addEventListener('click', function() {
+      exportXlsx();
+      document.getElementById('exports-modal').style.display = 'none';
+    });
+
+    document.getElementById('export-xml-modal').addEventListener('click', function() {
+      exportXml();
+      document.getElementById('exports-modal').style.display = 'none';
+    });
+
+    // ---- Кнопки выгрузки в toolbar ----
+    var xlsxBtn = document.getElementById('db-export-xlsx');
+    if (xlsxBtn) xlsxBtn.addEventListener('click', exportXlsx);
+
+    var xmlBtn = document.getElementById('db-export-xml');
+    if (xmlBtn) xmlBtn.addEventListener('click', exportXml);
+
+    // ---- Меню инструментов ----
+    var toolsBtn = document.getElementById('tools-toggle');
+    var toolsMenu = document.getElementById('tools-menu');
+
+    if (toolsBtn && toolsMenu) {
+      toolsBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        toolsMenu.classList.toggle('open');
+      });
+
+      document.addEventListener('click', function() {
+        toolsMenu.classList.remove('open');
+      });
+    }
+
+    // ---- Инициализация ----
+    (async function init() {
+      var admin = null;
+      try {
+        if (typeof getAdminUser === 'function') admin = await getAdminUser();
+      } catch(e) {}
+
+      var roleEl = document.getElementById('user-role');
+      var logoutBtn = document.getElementById('logout-btn');
+
+      if (admin) {
+        isAdmin = true;
+        if (roleEl) roleEl.textContent = '👑 ' + (admin.email || 'admin');
+        document.body.classList.add('is-admin');
+
+        if (logoutBtn) {
+          logoutBtn.style.display = 'inline-flex';
+          logoutBtn.addEventListener('click', function() {
+            if (typeof logoutAdmin === 'function') logoutAdmin();
+          });
+        }
+
+        // Показать админ-элементы
+        document.querySelectorAll('.admin-only').forEach(function(el) {
+          el.style.display = el.id === 'tools-nav' ? 'flex' : 'inline-block';
+        });
+
+      } else {
+        if (roleEl) roleEl.textContent = '👀 Гость (только просмотр)';
+        document.body.classList.add('is-guest');
+      }
+
+      loadDb();
+    })();
+  </script>
+
 </body>
 </html>
