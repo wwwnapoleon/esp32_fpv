@@ -47,7 +47,7 @@
         </div>
 
         <div class="access-qr-wrap">
-          <a href="project.html" class="access-qr-link">
+          <a href="project-page.html" class="access-qr-link">
             <img src="images/qr.png" alt="QR-код проекта" class="access-qr"
                  onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=10&data=' + encodeURIComponent(location.origin + location.pathname.replace('project-access.html','') + 'project.html')">
           </a>
@@ -60,7 +60,7 @@
           <li>👀 Только просмотр</li>
         </ul>
 
-        <a href="project.html?role=guest" class="btn btn-primary">
+        <a href="project-page.html?role=guest" class="btn btn-primary">
           Открыть как гость →
         </a>
       </div>
@@ -150,7 +150,7 @@
         errorEl.style.color = '#3fb950';
 
         setTimeout(() => {
-          window.location.href = 'project.html';
+          window.location.href = 'project-page.html';
         }, 800);
 
       } catch (err) {
