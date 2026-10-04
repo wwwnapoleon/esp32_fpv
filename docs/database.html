@@ -284,30 +284,29 @@
     // ---- Модальное окно ----
     document.getElementById('open-exports').addEventListener('click', function(e) {
       e.preventDefault();
-      document.getElementById('exports-modal').style.display = 'flex';
+      document.getElementById('exports-modal').classList.add('open');
       renderExportHistory();
     });
 
     document.getElementById('close-exports').addEventListener('click', function() {
-      document.getElementById('exports-modal').style.display = 'none';
+      document.getElementById('exports-modal').classList.remove('open');
     });
 
     document.getElementById('exports-modal').addEventListener('click', function(e) {
       if (e.target.id === 'exports-modal') {
-        this.style.display = 'none';
+      this.classList.remove('open');
       }
     });
 
     document.getElementById('export-xlsx-modal').addEventListener('click', function() {
       exportXlsx();
-      document.getElementById('exports-modal').style.display = 'none';
+      document.getElementById('exports-modal').classList.remove('open');
     });
 
     document.getElementById('export-xml-modal').addEventListener('click', function() {
       exportXml();
-      document.getElementById('exports-modal').style.display = 'none';
+      document.getElementById('exports-modal').classList.remove('open');
     });
-
     // ---- Кнопки выгрузки в toolbar ----
     var xlsxBtn = document.getElementById('db-export-xlsx');
     if (xlsxBtn) xlsxBtn.addEventListener('click', exportXlsx);
