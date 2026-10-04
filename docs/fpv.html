@@ -11,13 +11,17 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/redesign.css">
 </head>
-<body>
+<body class="fpv-page">
 
   <header class="topbar">
     <a href="project-page.html" class="btn-back">← Назад</a>
     <div class="brand">
       <span class="logo-icon">📹</span>
       <span>FPV камера</span>
+    </div>
+    <div class="topbar-actions">
+      <span id="user-role" class="role-badge">…</span>
+      <button id="logout-btn" class="btn-logout" style="display:none;">Выйти</button>
     </div>
   </header>
 
@@ -57,8 +61,8 @@
       </p>
     </div>
 
-    <!-- Панель быстрых действий -->
-    <div class="fpv-quick-actions">
+    <!-- Панель быстрых действий — ТОЛЬКО ДЛЯ АДМИНА -->
+    <div class="fpv-quick-actions" id="admin-actions">
       <a href="http://192.168.100.7/capture" target="_blank" class="btn">
         📸 Сделать снимок
       </a>
@@ -68,6 +72,51 @@
     </div>
 
   </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    (async function init() {
+      var admin = null;
+      try {
+        if (typeof getAdminUser === 'function') admin = await getAdminUser();
+      } catch(e) {}
+
+      var isRealAdmin = admin && admin.email;
+
+      var roleEl = document.getElementById('user-role');
+      var logoutBtn = document.getElementById('logout-btn');
+      var adminActions = document.getElementById('admin-actions');
+
+      if (isRealAdmin) {
+        // === АДМИН ===
+        if (roleEl) roleEl.textContent = '👑 ' + admin.email;
+        document.body.classList.remove('is-guest');
+        document.body.classList.add('is-admin');
+
+        if (logoutBtn) {
+          logoutBtn.style.display = 'inline-flex';
+          logoutBtn.addEventListener('click', function() {
+            if (typeof logoutAdmin === 'function') logoutAdmin();
+          });
+        }
+
+        if (adminActions) adminActions.style.display = 'flex';
+
+      } else {
+        // === ГОСТЬ ===
+        if (roleEl) roleEl.textContent = '👀 Гость (только просмотр)';
+        document.body.classList.remove('is-admin');
+        document.body.classList.add('is-guest');
+
+        if (logoutBtn) logoutBtn.style.display = 'none';
+
+        // Скрыть админ-панель жёстко
+        if (adminActions) adminActions.style.display = 'none';
+      }
+    })();
+  </script>
 
 </body>
 </html>
