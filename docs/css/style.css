@@ -2693,4 +2693,128 @@ body.is-guest .role-badge {
   }
 }
 
+/* ============================================================
+   СТРАНИЦА ПРОЕКТА — две плитки (FPV + БД)
+   ============================================================ */
 
+.project-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin: 40px 0;
+}
+
+.project-tile {
+  display: flex;
+  flex-direction: column;
+  background:
+    linear-gradient(135deg, rgba(63,185,80,0.06), rgba(46,160,67,0.02)),
+    var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 32px 28px;
+  text-decoration: none;
+  color: var(--text);
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+}
+
+.project-tile::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, rgba(63,185,80,0.1), transparent 70%);
+  pointer-events: none;
+}
+
+.project-tile:hover {
+  border-color: var(--green);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(63, 185, 80, 0.15);
+  color: var(--text);
+}
+
+.project-tile-icon {
+  font-size: 52px;
+  line-height: 1;
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.project-tile h2 {
+  font-size: 22px;
+  margin: 0 0 6px;
+  color: var(--green);
+  position: relative;
+}
+
+.project-tile-sub {
+  font-size: 12px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin: 0 0 14px;
+  position: relative;
+}
+
+.project-tile-desc {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.6;
+  margin: 0 0 16px;
+  position: relative;
+}
+
+.project-tile-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px;
+  flex: 1;
+  position: relative;
+}
+.project-tile-features li {
+  font-size: 13px;
+  color: var(--text-dim);
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+.project-tile-features li:last-child {
+  border-bottom: none;
+}
+
+.project-tile .btn {
+  position: relative;
+  text-align: center;
+  margin-top: auto;
+}
+
+/* Ссылка на вход админа */
+.project-admin-link {
+  text-align: center;
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--text-dim);
+}
+.project-admin-link a {
+  color: var(--green);
+  font-weight: 600;
+  margin-left: 6px;
+}
+
+/* Адаптив */
+@media (max-width: 800px) {
+  .project-grid {
+    grid-template-columns: 1fr;
+  }
+  .project-tile {
+    padding: 24px 20px;
+  }
+  .project-tile-icon { font-size: 40px; }
+  .project-tile h2 { font-size: 19px; }
+}
