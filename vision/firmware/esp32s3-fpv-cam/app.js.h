@@ -2,46 +2,31 @@
 #pragma once
 
 const char APP_JS[] PROGMEM = R"JS(
-// ============ Снимок ============
+// ============================================================
+//  ГЛОБАЛЬНЫЕ
+// ============================================================
+var currentAngle = 90;
+var lastSent     = -1;
+var holdTimer    = null;
+var holdInterval = null;
+var sendTimer    = null;
+
+// ============================================================
+//  СНИМОК
+// ============================================================
 document.getElementById("snapBtn").addEventListener("click", function() {
   window.open("/capture?t=" + Date.now(), "_blank");
 });
 
-// ============ Статус ============
-function updateStatus() {
-  var xhr = new XMLHttpRequest();
-  xhr.open("GET", "/status?t=" + Date.now(), true);
-  xhr.timeout = 2000;
-  xhr.onreadystatechange = function() {
-    if (xhr.readyState === 4 && xhr.status === 200) {
-      try {
-        var j = JSON.parse(xhr.responseText);
-        document.getElementById("rssi").textContent = j.rssi + " dBm";
-        document.getElementById("fps").textContent = j.fps;
-        document.getElementById("heap").textContent = Math.round(j.heap / 1024) + " KB";
-
-        // Синхронизируем угол, если изменился извне
-        if (typeof j.angle === "number" && j.angle !== currentAngle) {
-          currentAngle = j.angle;
-          updateAngleDisplay();
-        }
-      } catch(e) {}
-    }
-  };
-  try { xhr.send(); } catch(e) {}
-}
-
-// ============ Серво — джойстик ============
-var currentAngle = 90;
-var holdTimer    = null;
-var holdInterval = null;
-var lastSent     = -1;
-var sendTimer    = null;
-
+// ============================================================
+//  СЕРВО — ДЖОЙСТИК
+// ============================================================
 function updateAngleDisplay() {
-  document.getElementById("angleBig").textContent = currentAngle + "°";
+  var big = document.getElementById("angleBig");
+  if (big) big.textContent = currentAngle + "\u00B0";
+
   var center = document.querySelector(".joy-center");
-  if (center) center.textContent = currentAngle + "°";
+  if (center) center.textContent = currentAngle + "\u00B0";
 }
 
 function clampAngle(a) {
@@ -70,11 +55,9 @@ function changeAngle(delta) {
   sendAngle();
 }
 
-// --- Одиночное нажатие + удержание ---
 function startHold(delta) {
   changeAngle(delta);
 
-  // Через 300 мс — авто-повтор каждые 50 мс
   holdTimer = setTimeout(function() {
     holdInterval = setInterval(function() {
       changeAngle(delta);
@@ -89,6 +72,7 @@ function stopHold() {
   holdInterval = null;
 }
 
+// --- Кнопки джойстика ---
 document.querySelectorAll(".joy-btn[data-dir]").forEach(function(btn) {
   var dir = parseInt(btn.getAttribute("data-dir"), 10);
 
@@ -102,9 +86,9 @@ document.querySelectorAll(".joy-btn[data-dir]").forEach(function(btn) {
     startHold(dir);
   }, { passive: false });
 
-  btn.addEventListener("mouseup",  stopHold);
-  btn.addEventListener("mouseleave", stopHold);
-  btn.addEventListener("touchend",   stopHold);
+  btn.addEventListener("mouseup",     stopHold);
+  btn.addEventListener("mouseleave",  stopHold);
+  btn.addEventListener("touchend",    stopHold);
   btn.addEventListener("touchcancel", stopHold);
 });
 
@@ -119,7 +103,38 @@ document.querySelectorAll(".joy-preset").forEach(function(btn) {
   });
 });
 
-// ============ Запуск ============
+// ============================================================
+//  СТАТУС (FPS / RSSI / Heap) — порт 81
+// ============================================================
+function updateStatus() {
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", "http://" + location.hostname + ":81/status?t=" + Date.now(), true);
+  xhr.timeout = 2000;
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState === 4 && xhr.status === 200) {
+      try {
+        var j = JSON.parse(xhr.responseText);
+        var rssiEl = document.getElementById("rssi");
+        var fpsEl  = document.getElementById("fps");
+        var heapEl = document.getElementById("heap");
+
+        if (rssiEl) rssiEl.textContent = j.rssi + " dBm";
+        if (fpsEl)  fpsEl.textContent  = j.fps;
+        if (heapEl) heapEl.textContent = Math.round(j.heap / 1024) + " KB";
+
+        if (typeof j.angle === "number" && j.angle !== currentAngle) {
+          currentAngle = j.angle;
+          updateAngleDisplay();
+        }
+      } catch(e) {}
+    }
+  };
+  try { xhr.send(); } catch(e) {}
+}
+
+// ============================================================
+//  ЗАПУСК
+// ============================================================
 updateAngleDisplay();
 updateStatus();
 setInterval(updateStatus, 1500);
