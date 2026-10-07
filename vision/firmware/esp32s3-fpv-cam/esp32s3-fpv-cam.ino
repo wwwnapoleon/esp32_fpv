@@ -1,17 +1,18 @@
 /*
- * ESP32-S3 FPV Camera — два сервера
- * Порт 80: HTML, JS, /stream, /capture
+ * ESP32-S3 FPV Camera — два сервера + управление серво
+ * Порт 80: HTML, JS, /stream, /capture, /servo
  * Порт 81: /status (телеметрия)
  */
 
 #include "esp_camera.h"
 #include <WiFi.h>
+#include <ESP32Servo.h>
 #include "esp_http_server.h"
 #include "html.h"
 #include "app.js.h"
 
 // ================== НАСТРОЙКИ Wi-Fi ==================
-const char* WIFI_SSID = "RGB_Route";       // ← если роутер RGB_Route — поменяй
+const char* WIFI_SSID = "RGB_Route";
 const char* WIFI_PASS = "1234567890";
 
 // ================== ПИНЫ КАМЕРЫ ==================
@@ -33,6 +34,13 @@ const char* WIFI_PASS = "1234567890";
 #define VSYNC_GPIO_NUM    6
 #define HREF_GPIO_NUM     7
 #define PCLK_GPIO_NUM     13
+
+// ================== ПИН СЕРВО ==================
+#define SERVO_PIN         21
+
+Servo cameraServo;
+int currentAngle = 90;
+int targetAngle  = 90;
 
 // ================== ГЛОБАЛЬНЫЕ ==================
 httpd_handle_t stream_server = NULL;   // порт 80
@@ -91,7 +99,7 @@ bool initCamera() {
 }
 
 // ============================================================
-//  HANDLERS — ПОРТ 80 (HTML, JS, ПОТОК, СНИМОК)
+//  HANDLERS — ПОРТ 80
 // ============================================================
 
 static esp_err_t index_handler(httpd_req_t *req) {
@@ -155,6 +163,33 @@ static esp_err_t capture_handler(httpd_req_t *req) {
   return r;
 }
 
+// НОВОЕ — управление серво
+static esp_err_t servo_handler(httpd_req_t *req) {
+  httpd_resp_set_type(req, "application/json");
+  httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+  httpd_resp_set_hdr(req, "Cache-Control", "no-cache");
+
+  char buf[64];
+  int len = httpd_req_get_url_query_len(req) + 1;
+  int angle = targetAngle;
+
+  if (len > 1 && len < (int)sizeof(buf)) {
+    if (httpd_req_get_url_query_str(req, buf, len) == ESP_OK) {
+      char val[8];
+      if (httpd_query_key_value(buf, "angle", val, sizeof(val)) == ESP_OK) {
+        angle = atoi(val);
+        if (angle < 0)   angle = 0;
+        if (angle > 180) angle = 180;
+        targetAngle = angle;
+      }
+    }
+  }
+
+  char out[64];
+  snprintf(out, sizeof(out), "{\"angle\":%d}", targetAngle);
+  return httpd_resp_send(req, out, HTTPD_RESP_USE_STRLEN);
+}
+
 // ============================================================
 //  HANDLER — ПОРТ 81 (ТОЛЬКО СТАТУС)
 // ============================================================
@@ -165,10 +200,11 @@ static esp_err_t status_handler(httpd_req_t *req) {
   httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
   char out[128];
   snprintf(out, sizeof(out),
-    "{\"fps\":%d,\"rssi\":%d,\"heap\":%u}",
+    "{\"fps\":%d,\"rssi\":%d,\"heap\":%u,\"angle\":%d}",
     currentFps,
     WiFi.status() == WL_CONNECTED ? WiFi.RSSI() : 0,
-    ESP.getFreeHeap());
+    ESP.getFreeHeap(),
+    currentAngle);
   return httpd_resp_send(req, out, HTTPD_RESP_USE_STRLEN);
 }
 
@@ -180,7 +216,7 @@ void startStreamServer() {
   httpd_config_t cfg = HTTPD_DEFAULT_CONFIG();
   cfg.max_uri_handlers = 8;
   cfg.server_port      = 80;
-  cfg.ctrl_port        = 32768;        // уникальный
+  cfg.ctrl_port        = 32768;
   cfg.lru_purge_enable = true;
   cfg.stack_size       = 8192;
 
@@ -188,13 +224,15 @@ void startStreamServer() {
   httpd_uri_t uri_appjs   = { "/app.js",  HTTP_GET, appjs_handler,   NULL };
   httpd_uri_t uri_stream  = { "/stream",  HTTP_GET, stream_handler,  NULL };
   httpd_uri_t uri_capture = { "/capture", HTTP_GET, capture_handler, NULL };
+  httpd_uri_t uri_servo   = { "/servo",   HTTP_GET, servo_handler,   NULL };
 
   if (httpd_start(&stream_server, &cfg) == ESP_OK) {
     httpd_register_uri_handler(stream_server, &uri_index);
     httpd_register_uri_handler(stream_server, &uri_appjs);
     httpd_register_uri_handler(stream_server, &uri_stream);
     httpd_register_uri_handler(stream_server, &uri_capture);
-    Serial.println("✅ Stream server: port 80 (HTML, JS, /stream, /capture)");
+    httpd_register_uri_handler(stream_server, &uri_servo);
+    Serial.println("✅ Stream server: port 80 (HTML, JS, /stream, /capture, /servo)");
   } else {
     Serial.println("❌ Stream server FAILED");
   }
@@ -208,7 +246,7 @@ void startCtrlServer() {
   httpd_config_t cfg = HTTPD_DEFAULT_CONFIG();
   cfg.max_uri_handlers = 2;
   cfg.server_port      = 81;
-  cfg.ctrl_port        = 32769;        // ДОЛЖЕН отличаться от 32768!
+  cfg.ctrl_port        = 32769;
   cfg.lru_purge_enable = true;
   cfg.stack_size       = 4096;
 
@@ -231,12 +269,22 @@ void setup() {
   delay(300);
   Serial.println("\n=== ESP32-S3 FPV Camera ===");
 
+  // --- СЕРВО ---
+  ESP32PWM::allocateTimer(0);
+  ESP32PWM::allocateTimer(1);
+  cameraServo.setPeriodHertz(50);
+  cameraServo.attach(SERVO_PIN, 500, 2400);
+  cameraServo.write(currentAngle);
+  Serial.println("Servo OK");
+
+  // --- КАМЕРА ---
   if (!initCamera()) {
     Serial.println("Camera FAIL");
     while (true) delay(1000);
   }
   Serial.println("Camera OK");
 
+  // --- Wi-Fi ---
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASS);
   Serial.printf("Connecting to %s", WIFI_SSID);
@@ -252,6 +300,7 @@ void setup() {
     Serial.print("Web:     http://");
     Serial.println(WiFi.localIP());
     Serial.printf("Stream:  http://%s/stream\n", WiFi.localIP().toString().c_str());
+    Serial.printf("Servo:   http://%s/servo?angle=90\n", WiFi.localIP().toString().c_str());
     Serial.printf("Status:  http://%s:81/status\n", WiFi.localIP().toString().c_str());
     Serial.printf("RSSI:    %d dBm\n", WiFi.RSSI());
   } else {
@@ -259,10 +308,19 @@ void setup() {
     ESP.restart();
   }
 
-  startStreamServer();   // порт 80
-  startCtrlServer();     // порт 81
+  startStreamServer();
+  startCtrlServer();
 }
 
+// ============================================================
+//  LOOP — плавное движение серво
+// ============================================================
+
 void loop() {
-  delay(1000);
+  if (currentAngle != targetAngle) {
+    if (currentAngle < targetAngle) currentAngle++;
+    else currentAngle--;
+    cameraServo.write(currentAngle);
+  }
+  delay(15);
 }
