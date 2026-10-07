@@ -1,4 +1,4 @@
-// html.h — HTML + CSS для страницы камеры с серво
+// html.h — HTML + CSS
 #pragma once
 
 const char INDEX_HTML[] PROGMEM = R"HTML(
@@ -34,30 +34,51 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
             font-size: 13px; color: rgb(170,170,170); }
   .status .val { color: rgb(68,170,255); font-weight: 600; }
 
-  /* Серво-панель */
+  /* Джойстик серво */
   .servo-panel { width: 100%; max-width: 720px;
-                 background: rgb(28,28,28); padding: 16px;
-                 border-radius: 12px; }
+                 background: rgb(28,28,28); padding: 20px;
+                 border-radius: 12px;
+                 display: flex; flex-direction: column; align-items: center;
+                 gap: 14px; }
   .servo-title { font-size: 14px; color: rgb(68,170,255);
-                 font-weight: 600; margin-bottom: 12px; }
-  .servo-row { display: flex; align-items: center; gap: 14px;
-               margin-bottom: 12px; }
-  .servo-row label { font-size: 13px; color: rgb(170,170,170);
-                     width: 50px; }
-  .servo-row input[type=range] { flex: 1; accent-color: rgb(68,170,255);
-                                  height: 6px; cursor: pointer; }
-  .servo-angle { min-width: 50px; text-align: right;
-                 font-family: monospace; font-size: 16px;
-                 font-weight: 700; color: rgb(68,170,255); }
-  .servo-presets { display: grid; grid-template-columns: repeat(5, 1fr);
-                   gap: 8px; }
-  .servo-preset { padding: 10px 0; background: rgb(42,42,42);
-                  border: 1px solid rgb(68,68,68);
-                  color: rgb(238,238,238); border-radius: 8px;
-                  cursor: pointer; font-size: 13px; font-weight: 600;
-                  font-family: inherit; }
-  .servo-preset:hover { background: rgb(58,58,58);
-                        border-color: rgb(68,170,255); }
+                 font-weight: 600; }
+  .servo-angle-big { font-size: 32px; font-weight: 800;
+                     font-family: monospace; color: rgb(68,170,255); }
+  .joystick { display: grid;
+              grid-template-columns: 70px 70px 70px;
+              grid-template-rows: 70px 70px 70px;
+              gap: 8px; }
+  .joy-btn { width: 70px; height: 70px;
+             background: rgb(42,42,42);
+             border: 2px solid rgb(68,68,68);
+             color: rgb(238,238,238);
+             border-radius: 12px; font-size: 26px; font-weight: 700;
+             cursor: pointer;
+             display: flex; align-items: center; justify-content: center;
+             transition: background 0.1s, border-color 0.1s, transform 0.05s;
+             user-select: none; -webkit-user-select: none;
+             font-family: inherit; }
+  .joy-btn:hover { background: rgb(58,58,58); border-color: rgb(68,170,255); }
+  .joy-btn:active { background: rgb(68,170,255); color: rgb(0,0,0);
+                    transform: scale(0.94); }
+  .joy-up    { grid-column: 2; grid-row: 1; }
+  .joy-left  { grid-column: 1; grid-row: 2; }
+  .joy-right { grid-column: 3; grid-row: 2; }
+  .joy-down  { grid-column: 2; grid-row: 3; }
+  .joy-center { grid-column: 2; grid-row: 2;
+                background: rgb(20,20,20);
+                border-color: rgb(50,50,50);
+                font-size: 14px; color: rgb(120,120,120);
+                cursor: default; }
+  .joy-center:hover { background: rgb(20,20,20);
+                      border-color: rgb(50,50,50); }
+  .joy-presets { display: flex; gap: 8px; margin-top: 6px; }
+  .joy-preset { padding: 8px 16px; background: rgb(42,42,42);
+                border: 1px solid rgb(68,68,68); color: rgb(238,238,238);
+                border-radius: 8px; cursor: pointer; font-size: 13px;
+                font-family: inherit; }
+  .joy-preset:hover { background: rgb(58,58,58);
+                      border-color: rgb(68,170,255); }
 </style>
 </head>
 <body>
@@ -79,22 +100,25 @@ const char INDEX_HTML[] PROGMEM = R"HTML(
   </div>
 </div>
 
-<!-- Управление серво -->
+<!-- Джойстик серво -->
 <div class="servo-panel">
   <div class="servo-title">🎛️ Управление камерой</div>
+  <div class="servo-angle-big" id="angleBig">90°</div>
 
-  <div class="servo-row">
-    <label>Угол</label>
-    <input type="range" id="servoAngle" min="0" max="180" value="90" step="1">
-    <span class="servo-angle" id="servoAngleVal">90°</span>
+  <div class="joystick">
+    <button class="joy-btn joy-up"    data-dir="+1">▲</button>
+    <button class="joy-btn joy-left"  data-dir="-1">◀</button>
+    <div class="joy-btn joy-center">90°</div>
+    <button class="joy-btn joy-right" data-dir="+1">▶</button>
+    <button class="joy-btn joy-down"  data-dir="-1">▼</button>
   </div>
 
-  <div class="servo-presets">
-    <button class="servo-preset" data-angle="0">0°</button>
-    <button class="servo-preset" data-angle="45">45°</button>
-    <button class="servo-preset" data-angle="90">90°</button>
-    <button class="servo-preset" data-angle="135">135°</button>
-    <button class="servo-preset" data-angle="180">180°</button>
+  <div class="joy-presets">
+    <button class="joy-preset" data-angle="0">0°</button>
+    <button class="joy-preset" data-angle="45">45°</button>
+    <button class="joy-preset" data-angle="90">90°</button>
+    <button class="joy-preset" data-angle="135">135°</button>
+    <button class="joy-preset" data-angle="180">180°</button>
   </div>
 </div>
 
