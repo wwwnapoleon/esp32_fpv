@@ -10,8 +10,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/redesign.css">
+  <style>
+    /* По умолчанию — ничего не видно */
+    .project-grid { display: none !important; }
+    /* Гость / ученик — только FPV */
+    body.is-guest #grid-guest { display: grid !important; grid-template-columns: 1fr !important; }
+    /* Админ — обе плитки */
+    body.is-admin #grid-admin { display: grid !important; }
+  </style>
 </head>
-<body class="project-page">
+<body class="project-page is-guest">
 
   <header class="topbar">
     <a href="index.html" class="btn-back">← На главную</a>
@@ -29,18 +37,16 @@
 
     <h1>🏫 Страница проекта</h1>
     <p class="lead" id="project-lead">
-      Прямой доступ к FPV-камере робота и базе данных проекта.
+      Прямой доступ к FPV-камере робота.
     </p>
 
-    <!-- ГОСТЮ: только FPV -->
-    <div class="project-grid project-grid--guest" id="grid-guest" hidden>
+    <!-- ГОСТЮ: FPV -->
+    <div class="project-grid" id="grid-guest">
       <a href="fpv.html" class="project-tile project-tile--fpv">
         <div class="project-tile-icon">📹</div>
         <h2>FPV камера</h2>
         <p class="project-tile-sub">Прямая трансляция</p>
-        <p class="project-tile-desc">
-          Поток с камеры ESP32-S3 в реальном времени.
-        </p>
+        <p class="project-tile-desc">Поток с камеры ESP32-S3 в реальном времени.</p>
         <ul class="project-tile-features">
           <li>📹 Трансляция с робота</li>
           <li>👀 Только просмотр</li>
@@ -50,19 +56,17 @@
     </div>
 
     <!-- АДМИНУ: FPV + БД -->
-    <div class="project-grid project-grid--admin" id="grid-admin" hidden>
+    <div class="project-grid" id="grid-admin">
       <a href="fpv.html" class="project-tile project-tile--fpv">
         <div class="project-tile-icon">📹</div>
         <h2>FPV камера</h2>
         <p class="project-tile-sub">Прямая трансляция</p>
-        <p class="project-tile-desc">
-          Поток с камеры ESP32-S3 в реальном времени.
-        </p>
+        <p class="project-tile-desc">Поток с камеры + управление.</p>
         <ul class="project-tile-features">
-          <li>📹 Трансляция с робота</li>
+          <li>📹 Трансляция</li>
           <li>📸 Снимок</li>
-          <li>🎛️ Управление серво</li>
-          <li>📊 FPS / RSSI</li>
+          <li>🎛️ Серво</li>
+          <li>📊 FPS</li>
         </ul>
         <span class="btn btn-primary">Открыть FPV →</span>
       </a>
@@ -71,13 +75,11 @@
         <div class="project-tile-icon">🗄️</div>
         <h2>База данных</h2>
         <p class="project-tile-sub">ЭКО-ШКОЛА</p>
-        <p class="project-tile-desc">
-          Все регистрации участников. Поиск, фильтры, выгрузка.
-        </p>
+        <p class="project-tile-desc">Все регистрации.</p>
         <ul class="project-tile-features">
-          <li>🗄️ Список участников</li>
-          <li>🔍 Поиск по ФИО / классу</li>
-          <li>⬇️ Выгрузка XLSX / XML</li>
+          <li>🗄️ Участники</li>
+          <li>🔍 Поиск</li>
+          <li>⬇️ Выгрузка</li>
         </ul>
         <span class="btn btn-primary">Открыть БД →</span>
       </a>
@@ -106,44 +108,31 @@
       var roleEl    = document.getElementById('user-role');
       var logoutBtn = document.getElementById('logout-btn');
       var adminLink = document.getElementById('admin-link');
-      var gridGuest = document.getElementById('grid-guest');
-      var gridAdmin = document.getElementById('grid-admin');
       var leadEl    = document.getElementById('project-lead');
 
-      // Скрываем всё по умолчанию
-      if (gridGuest) gridGuest.hidden = true;
-      if (gridAdmin) gridAdmin.hidden = true;
+      // ⚠️ ВСЁ через классы body
+      document.body.classList.remove('is-admin', 'is-guest');
 
       if (isRealAdmin) {
-        // === АДМИН ===
-        if (roleEl) roleEl.textContent = '👑 ' + admin.email;
         document.body.classList.add('is-admin');
-        document.body.classList.remove('is-guest');
-
+        if (roleEl) roleEl.textContent = '👑 ' + admin.email;
         if (logoutBtn) {
           logoutBtn.style.display = 'inline-flex';
           logoutBtn.addEventListener('click', function() {
             if (typeof logoutAdmin === 'function') logoutAdmin();
           });
         }
-
-        if (gridAdmin) gridAdmin.hidden = false;
-        if (leadEl) leadEl.textContent = 'Прямой доступ к FPV-камере робота и базе данных проекта. Выберите раздел:';
+        if (leadEl) leadEl.textContent = 'Прямой доступ к FPV-камере и базе данных. Выберите раздел:';
 
       } else {
-        // === ГОСТЬ / УЧЕНИК ===
-        document.body.classList.remove('is-admin');
         document.body.classList.add('is-guest');
-
         if (user) {
           if (roleEl) roleEl.textContent = '👤 ' + (user.fio || 'Ученик');
         } else {
           if (roleEl) roleEl.textContent = '👀 Гость';
           if (adminLink) adminLink.style.display = 'block';
         }
-
-        if (gridGuest) gridGuest.hidden = false;
-        if (leadEl) leadEl.textContent = 'Прямой доступ к FPV-камере робота. Откройте трансляцию:';
+        if (leadEl) leadEl.textContent = 'Прямой доступ к FPV-камере робота:';
       }
     })();
   </script>
