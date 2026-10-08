@@ -28,13 +28,12 @@
   <main class="project-main">
 
     <h1>🏫 Страница проекта</h1>
-    <p class="lead">
+    <p class="lead" id="project-lead">
       Прямой доступ к FPV-камере робота и базе данных проекта.
-      Выберите раздел:
     </p>
 
-    <!-- Гость: ОДНА плитка FPV -->
-    <div class="project-grid" id="grid-guest" style="display:none; grid-template-columns: 1fr;">
+    <!-- ГОСТЮ: только FPV -->
+    <div class="project-grid project-grid--guest" id="grid-guest" hidden>
       <a href="fpv.html" class="project-tile project-tile--fpv">
         <div class="project-tile-icon">📹</div>
         <h2>FPV камера</h2>
@@ -50,8 +49,8 @@
       </a>
     </div>
 
-    <!-- Админ: ДВЕ плитки (FPV + БД) -->
-    <div class="project-grid" id="grid-admin" style="display:none;">
+    <!-- АДМИНУ: FPV + БД -->
+    <div class="project-grid project-grid--admin" id="grid-admin" hidden>
       <a href="fpv.html" class="project-tile project-tile--fpv">
         <div class="project-tile-icon">📹</div>
         <h2>FPV камера</h2>
@@ -84,7 +83,6 @@
       </a>
     </div>
 
-    <!-- Ссылка на вход для админа (если не залогинен) -->
     <div class="project-admin-link" id="admin-link" style="display:none;">
       <span>👑 Вход для админа:</span>
       <a href="admin-login.html">войти по email + паролю</a>
@@ -105,16 +103,22 @@
       var isRealAdmin = admin && admin.email;
       var user = getUser();
 
-      var roleEl     = document.getElementById('user-role');
-      var logoutBtn  = document.getElementById('logout-btn');
-      var adminLink  = document.getElementById('admin-link');
-      var gridGuest  = document.getElementById('grid-guest');
-      var gridAdmin  = document.getElementById('grid-admin');
+      var roleEl    = document.getElementById('user-role');
+      var logoutBtn = document.getElementById('logout-btn');
+      var adminLink = document.getElementById('admin-link');
+      var gridGuest = document.getElementById('grid-guest');
+      var gridAdmin = document.getElementById('grid-admin');
+      var leadEl    = document.getElementById('project-lead');
+
+      // Скрываем всё по умолчанию
+      if (gridGuest) gridGuest.hidden = true;
+      if (gridAdmin) gridAdmin.hidden = true;
 
       if (isRealAdmin) {
-        // === АДМИН — две плитки ===
+        // === АДМИН ===
         if (roleEl) roleEl.textContent = '👑 ' + admin.email;
         document.body.classList.add('is-admin');
+        document.body.classList.remove('is-guest');
 
         if (logoutBtn) {
           logoutBtn.style.display = 'inline-flex';
@@ -123,11 +127,14 @@
           });
         }
 
-        if (gridAdmin) gridAdmin.style.display = 'grid';
-        if (gridGuest) gridGuest.style.display = 'none';
+        if (gridAdmin) gridAdmin.hidden = false;
+        if (leadEl) leadEl.textContent = 'Прямой доступ к FPV-камере робота и базе данных проекта. Выберите раздел:';
 
       } else {
-        // === ГОСТЬ / УЧЕНИК — только FPV ===
+        // === ГОСТЬ / УЧЕНИК ===
+        document.body.classList.remove('is-admin');
+        document.body.classList.add('is-guest');
+
         if (user) {
           if (roleEl) roleEl.textContent = '👤 ' + (user.fio || 'Ученик');
         } else {
@@ -135,8 +142,8 @@
           if (adminLink) adminLink.style.display = 'block';
         }
 
-        if (gridGuest) gridGuest.style.display = 'grid';
-        if (gridAdmin) gridAdmin.style.display = 'none';
+        if (gridGuest) gridGuest.hidden = false;
+        if (leadEl) leadEl.textContent = 'Прямой доступ к FPV-камере робота. Откройте трансляцию:';
       }
     })();
   </script>
