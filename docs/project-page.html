@@ -33,9 +33,8 @@
       Выберите раздел:
     </p>
 
-    <div class="project-grid">
-
-      <!-- БЛОК 1: FPV камера -->
+    <!-- Гость: ОДНА плитка FPV -->
+    <div class="project-grid" id="grid-guest" style="display:none; grid-template-columns: 1fr;">
       <a href="fpv.html" class="project-tile project-tile--fpv">
         <div class="project-tile-icon">📹</div>
         <h2>FPV камера</h2>
@@ -45,13 +44,30 @@
         </p>
         <ul class="project-tile-features">
           <li>📹 Трансляция с робота</li>
-          <li>📸 Снимок (админ)</li>
-          <li>📊 FPS / RSSI (админ)</li>
+          <li>👀 Только просмотр</li>
+        </ul>
+        <span class="btn btn-primary">Открыть FPV →</span>
+      </a>
+    </div>
+
+    <!-- Админ: ДВЕ плитки (FPV + БД) -->
+    <div class="project-grid" id="grid-admin" style="display:none;">
+      <a href="fpv.html" class="project-tile project-tile--fpv">
+        <div class="project-tile-icon">📹</div>
+        <h2>FPV камера</h2>
+        <p class="project-tile-sub">Прямая трансляция</p>
+        <p class="project-tile-desc">
+          Поток с камеры ESP32-S3 в реальном времени.
+        </p>
+        <ul class="project-tile-features">
+          <li>📹 Трансляция с робота</li>
+          <li>📸 Снимок</li>
+          <li>🎛️ Управление серво</li>
+          <li>📊 FPS / RSSI</li>
         </ul>
         <span class="btn btn-primary">Открыть FPV →</span>
       </a>
 
-      <!-- БЛОК 2: База данных -->
       <a href="database.html" class="project-tile project-tile--db">
         <div class="project-tile-icon">🗄️</div>
         <h2>База данных</h2>
@@ -62,11 +78,10 @@
         <ul class="project-tile-features">
           <li>🗄️ Список участников</li>
           <li>🔍 Поиск по ФИО / классу</li>
-          <li>⬇️ Выгрузка XLSX / XML (админ)</li>
+          <li>⬇️ Выгрузка XLSX / XML</li>
         </ul>
         <span class="btn btn-primary">Открыть БД →</span>
       </a>
-
     </div>
 
     <!-- Ссылка на вход для админа (если не залогинен) -->
@@ -87,13 +102,18 @@
         if (typeof getAdminUser === 'function') admin = await getAdminUser();
       } catch(e) {}
 
+      var isRealAdmin = admin && admin.email;
       var user = getUser();
-      var roleEl = document.getElementById('user-role');
-      var logoutBtn = document.getElementById('logout-btn');
-      var adminLink = document.getElementById('admin-link');
 
-      if (admin) {
-        if (roleEl) roleEl.textContent = '👑 ' + (admin.email || 'admin');
+      var roleEl     = document.getElementById('user-role');
+      var logoutBtn  = document.getElementById('logout-btn');
+      var adminLink  = document.getElementById('admin-link');
+      var gridGuest  = document.getElementById('grid-guest');
+      var gridAdmin  = document.getElementById('grid-admin');
+
+      if (isRealAdmin) {
+        // === АДМИН — две плитки ===
+        if (roleEl) roleEl.textContent = '👑 ' + admin.email;
         document.body.classList.add('is-admin');
 
         if (logoutBtn) {
@@ -102,13 +122,21 @@
             if (typeof logoutAdmin === 'function') logoutAdmin();
           });
         }
-      } else if (user) {
-        if (roleEl) roleEl.textContent = '👤 ' + (user.fio || 'Ученик');
-        document.body.classList.add('is-user');
+
+        if (gridAdmin) gridAdmin.style.display = 'grid';
+        if (gridGuest) gridGuest.style.display = 'none';
+
       } else {
-        if (roleEl) roleEl.textContent = '👀 Гость';
-        document.body.classList.add('is-guest');
-        if (adminLink) adminLink.style.display = 'block';
+        // === ГОСТЬ / УЧЕНИК — только FPV ===
+        if (user) {
+          if (roleEl) roleEl.textContent = '👤 ' + (user.fio || 'Ученик');
+        } else {
+          if (roleEl) roleEl.textContent = '👀 Гость';
+          if (adminLink) adminLink.style.display = 'block';
+        }
+
+        if (gridGuest) gridGuest.style.display = 'grid';
+        if (gridAdmin) gridAdmin.style.display = 'none';
       }
     })();
   </script>
