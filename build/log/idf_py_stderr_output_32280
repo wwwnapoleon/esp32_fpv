@@ -1,0 +1,21 @@
+Command: cmake -G Ninja -DPYTHON_DEPS_CHECKED=1 -DPYTHON=C:\Espressif\python_env\idf5.5_py3.11_env\Scripts\python.exe -DESP_PLATFORM=1 -DCCACHE_ENABLE=1 C:\Users\Андрей\Desktop\GitHub_Projects\greenKI-fpv
+CMake Warning at C:/Espressif/frameworks/esp-idf-v5.5.5/tools/cmake/git_submodules.cmake:4 (message):
+  Git executable was not found.  Git submodule checks will not be executed.
+  If you have any build issues at all, start by adding git executable to the
+  PATH and rerun cmake to not see this warning again.
+Call Stack (most recent call first):
+  C:/Espressif/frameworks/esp-idf-v5.5.5/tools/cmake/idf.cmake:41 (include)
+  C:/Espressif/frameworks/esp-idf-v5.5.5/tools/cmake/project.cmake:29 (include)
+  CMakeLists.txt:9 (include)
+
+
+CMake Error at C:/Espressif/frameworks/esp-idf-v5.5.5/tools/cmake/build.cmake:332 (message):
+  Failed to resolve component 'esp32-camera' required by component 'main':
+  unknown name.
+Call Stack (most recent call first):
+  C:/Espressif/frameworks/esp-idf-v5.5.5/tools/cmake/build.cmake:375 (__build_resolve_and_add_req)
+  C:/Espressif/frameworks/esp-idf-v5.5.5/tools/cmake/build.cmake:689 (__build_expand_requirements)
+  C:/Espressif/frameworks/esp-idf-v5.5.5/tools/cmake/project.cmake:752 (idf_build_process)
+  CMakeLists.txt:10 (project)
+
+

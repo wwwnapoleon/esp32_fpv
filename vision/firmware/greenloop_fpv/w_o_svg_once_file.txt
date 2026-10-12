@@ -1,0 +1,1002 @@
+/*
+ * ESP32-S3 GreenLoop FPV · FINAL v5
+ *
+ * ДВУХПОРТОВАЯ СХЕМА:
+ *  - Порт 80 → UI: /, /setup, /scan, /connect, /status, /servo
+ *  - Порт 81 → ТОЛЬКО стрим: /stream
+ *
+ * UI:
+ *  - Адаптивный (ПК / телефон)
+ *  - Табы: 🎛️ Серво / 🔍 Зум / 🔄 Поворот / 🪞 Зеркало
+ *  - На ПК: стрим слева, табы + секция справа
+ *  - На телефоне: табы сверху, стрим, секция, футер
+ *
+ * ВОЗМОЖНОСТИ:
+ *  - Цифровой зум (CSS) — 1x / 1.5x / 2x / 3x
+ *  - Программный поворот — 0° / 90° / 180° / 270°
+ *  - Зеркало H/V
+ *  - AP + STA + mDNS greenloop.local
+ *  - Автоподключение к RGB_Route
+ */
+
+#include "esp_camera.h"
+#include <WiFi.h>
+#include <ESP32Servo.h>
+#include "esp_http_server.h"
+#include <ESPmDNS.h>
+
+// ================== AP ==================
+const char* AP_SSID = "GreenLoop-Setup";
+const char* AP_PASS = "12345678";
+
+// ================== STA ==================
+const char* STA_SSID = "RGB_Route";
+const char* STA_PASS = "1234567890";
+
+// ================== ПИНЫ КАМЕРЫ ==================
+#define PWDN_GPIO_NUM     -1
+#define RESET_GPIO_NUM    -1
+#define XCLK_GPIO_NUM     15
+#define SIOD_GPIO_NUM     4
+#define SIOC_GPIO_NUM     5
+#define Y9_GPIO_NUM       16
+#define Y8_GPIO_NUM       17
+#define Y7_GPIO_NUM       18
+#define Y6_GPIO_NUM       12
+#define Y5_GPIO_NUM       10
+#define Y4_GPIO_NUM       8
+#define Y3_GPIO_NUM       9
+#define Y2_GPIO_NUM       11
+#define VSYNC_GPIO_NUM    6
+#define HREF_GPIO_NUM     7
+#define PCLK_GPIO_NUM     13
+
+// ================== ПИН СЕРВО ==================
+#define SERVO_PIN         21
+
+Servo cameraServo;
+int currentAngle = 90;
+int targetAngle  = 90;
+
+// ================== ГЛОБАЛЬНЫЕ ==================
+httpd_handle_t ui_server     = NULL;
+httpd_handle_t stream_server = NULL;
+unsigned long framesCount = 0;
+unsigned long lastFpsTime = 0;
+int currentFps = 0;
+bool cameraOK = false;
+
+// ================== HTML: НАСТРОЙКА WI-FI ==================
+const char SETUP_HTML[] PROGMEM = R"HTML(
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GreenLoop · Настройка Wi-Fi</title>
+<style>
+  * { box-sizing: border-box; }
+  body { background: #0d1117; color: #e6edf3; font-family: -apple-system, sans-serif;
+         display: flex; justify-content: center; align-items: center;
+         min-height: 100vh; margin: 0; padding: 20px; }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 16px;
+          padding: 32px; max-width: 440px; width: 100%; }
+  h1 { margin: 0 0 8px; color: #3fb950; }
+  .sub { opacity: 0.7; margin: 0 0 24px; font-size: 0.9rem; }
+  label { display: block; margin: 16px 0 6px; font-weight: 600; font-size: 0.9rem; }
+  select, input { width: 100%; padding: 12px 14px; background: #0d1117;
+                  border: 1px solid #30363d; border-radius: 8px;
+                  color: #e6edf3; font-size: 1rem; font-family: inherit; }
+  select:focus, input:focus { outline: none; border-color: #3fb950; }
+  button { width: 100%; margin-top: 16px; padding: 14px; background: #3fb950;
+           color: #fff; border: none; border-radius: 8px; font-size: 1rem;
+           font-weight: 700; cursor: pointer; }
+  button:hover { background: #2ea043; }
+  .refresh { background: transparent; border: 1px solid #30363d; color: #e6edf3;
+             font-size: 0.85rem; padding: 8px; margin-top: 8px; }
+  .status { margin-top: 16px; padding: 12px; border-radius: 8px;
+            font-size: 0.9rem; text-align: center; display: none; }
+  .status.ok { background: rgba(63,185,80,0.15); color: #3fb950; display: block; }
+  .status.err { background: rgba(248,81,73,0.15); color: #f85149; display: block; }
+  .status.wait { background: rgba(88,166,255,0.15); color: #58a6ff; display: block; }
+  .back { display: inline-block; margin-top: 20px; color: #58a6ff;
+          text-decoration: none; font-size: 0.9rem; }
+  .info { margin-top: 20px; padding: 12px; background: rgba(88,166,255,0.08);
+          border: 1px solid rgba(88,166,255,0.2); border-radius: 8px;
+          font-size: 0.85rem; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>🌿 GreenLoop</h1>
+  <p class="sub">Ручное подключение к другой сети</p>
+
+  <form id="wifiForm">
+    <label>Wi-Fi сеть</label>
+    <select id="ssid" name="ssid" required>
+      <option value="">— сканирование... —</option>
+    </select>
+    <button type="button" class="refresh" onclick="scanWifi()">🔄 Обновить список</button>
+
+    <label>Пароль</label>
+    <input type="password" id="pass" name="pass" placeholder="••••••••">
+
+    <button type="submit">📡 Подключиться</button>
+  </form>
+
+  <div id="status" class="status"></div>
+  <a href="/" class="back">← Вернуться к камере</a>
+
+  <div class="info">
+    <strong>ℹ️ Что это:</strong><br>
+    ESP32 автоматически подключается к <code>RGB_Route</code>.<br>
+    Здесь можно подключиться к <strong>другой</strong> сети.
+  </div>
+</div>
+
+<script>
+async function scanWifi() {
+  const sel = document.getElementById('ssid');
+  sel.innerHTML = '<option value="">— сканирование... —</option>';
+  try {
+    const res = await fetch('/scan');
+    const nets = await res.json();
+    sel.innerHTML = '';
+    if (nets.length === 0) {
+      sel.innerHTML = '<option value="">— сетей не найдено —</option>';
+      return;
+    }
+    nets.forEach(n => {
+      const opt = document.createElement('option');
+      opt.value = n.ssid;
+      opt.textContent = n.ssid + '  (' + n.rssi + ' dBm)';
+      sel.appendChild(opt);
+    });
+  } catch (e) {
+    sel.innerHTML = '<option value="">— ошибка —</option>';
+  }
+}
+
+document.getElementById('wifiForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const ssid = document.getElementById('ssid').value;
+  const pass = document.getElementById('pass').value;
+  const st = document.getElementById('status');
+
+  if (!ssid) { st.className='status err'; st.textContent='❌ Выберите сеть'; return; }
+
+  st.className = 'status wait';
+  st.textContent = '⏳ Подключение...';
+
+  try {
+    const res = await fetch('/connect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'ssid=' + encodeURIComponent(ssid) + '&pass=' + encodeURIComponent(pass)
+    });
+
+    if (res.ok) {
+      st.className = 'status ok';
+      st.textContent = '✅ Подключено! Переход...';
+      const html = await res.text();
+      document.open();
+      document.write(html);
+      document.close();
+    } else {
+      try {
+        const err = await res.json();
+        st.className = 'status err';
+        st.textContent = '❌ ' + (err.error || 'Ошибка подключения');
+      } catch (e) {
+        const text = await res.text();
+        st.className = 'status err';
+        st.textContent = '❌ ' + text;
+      }
+    }
+  } catch (e) {
+    st.className = 'status err';
+    st.textContent = '❌ Ошибка: ' + e.message;
+  }
+});
+
+scanWifi();
+</script>
+</body>
+</html>
+)HTML";
+
+// ================== HTML: СТРАНИЦА СТРИМА ==================
+const char STREAM_HTML[] PROGMEM = R"HTML(
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GreenLoop FPV</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0d1117; color: #e6edf3;
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+    padding: 12px; min-height: 100vh;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; }
+
+  /* ============ ХЕДЕР ============ */
+  .header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px; padding-bottom: 10px;
+    border-bottom: 1px solid #21262d;
+  }
+  .header h1 { font-size: 1.1rem; color: #3fb950; font-weight: 700; }
+  .header .meta-mini {
+    font-size: 0.72rem; opacity: 0.6;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  @media (max-width: 600px) {
+    .header h1 { font-size: 0.95rem; }
+    .header .meta-mini { display: none; }
+  }
+
+  /* ============ СЕТКА ============ */
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    grid-template-areas: "stream sidebar";
+    gap: 12px;
+    align-items: start;
+  }
+
+  .stream-wrap { grid-area: stream; }
+  .sidebar     { grid-area: sidebar; }
+
+  /* Телефон */
+  @media (max-width: 900px) {
+    .layout {
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        "tabs"
+        "stream"
+        "panel";
+    }
+    .sidebar { display: contents; }
+    .tabs    { grid-area: tabs; }
+    .stream-wrap { grid-area: stream; }
+    .panel   { grid-area: panel; }
+  }
+
+  /* ============ СТРИМ ============ */
+  .stream-wrap {
+    background: #000; border-radius: 12px; overflow: hidden;
+    border: 1px solid #30363d;
+    aspect-ratio: 4/3;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .stream-wrap img {
+    max-width: 100%; max-height: 100%;
+    transition: transform 0.3s ease;
+    transform-origin: center center;
+  }
+
+  /* ============ ТАБЫ ============ */
+  .tabs {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    background: #161b22;
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid #30363d;
+    margin-bottom: 10px;
+  }
+  .tab {
+    padding: 10px 4px; background: transparent;
+    color: #e6edf3; border: none; border-radius: 8px;
+    cursor: pointer; font-size: 1.05rem;
+    transition: background 0.15s;
+    font-family: inherit;
+  }
+  .tab:hover { background: rgba(255,255,255,0.05); }
+  .tab.active {
+    background: rgba(63,185,80,0.15);
+    color: #3fb950;
+  }
+
+  /* ============ ПАНЕЛЬ ============ */
+  .panel {
+    background: #161b22; border: 1px solid #30363d;
+    border-radius: 12px; padding: 14px;
+    min-height: 180px;
+  }
+
+  .section { display: none; }
+  .section.active { display: block; animation: fadeIn 0.2s ease; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-title {
+    font-size: 0.85rem; font-weight: 600;
+    color: #3fb950; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  /* ============ УГЛЫ СЕРВО ============ */
+  .angle-display {
+    font-size: 1.75rem; font-weight: 800;
+    text-align: center; color: #58a6ff;
+    margin: 4px 0 12px;
+  }
+  .dpad {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 6px; max-width: 180px; margin: 0 auto 12px;
+  }
+  .dpad button {
+    padding: 12px; background: #21262d; color: #e6edf3;
+    border: 1px solid #30363d; border-radius: 8px;
+    font-size: 1rem; cursor: pointer;
+    transition: all 0.15s; font-family: inherit;
+  }
+  .dpad button:hover { background: #30363d; border-color: #3fb950; }
+  .dpad .empty { visibility: hidden; }
+
+  /* ============ КНОПКИ ============ */
+  .buttons {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  .buttons.cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .buttons button {
+    padding: 12px 6px; background: #21262d; color: #e6edf3;
+    border: 1px solid #30363d; border-radius: 8px;
+    cursor: pointer; font-size: 0.85rem;
+    transition: all 0.15s; font-family: inherit;
+  }
+  .buttons button:hover { background: #30363d; border-color: #3fb950; }
+  .buttons button.active {
+    background: rgba(63,185,80,0.2);
+    border-color: #3fb950; color: #3fb950;
+    font-weight: 600;
+  }
+
+  /* ============ ФУТЕР ============ */
+  .footer {
+    margin-top: 12px; padding-top: 10px;
+    border-top: 1px solid #21262d;
+    display: flex; justify-content: space-between;
+    align-items: center; flex-wrap: wrap; gap: 8px;
+    font-size: 0.72rem; opacity: 0.7;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .footer .stats span { color: #58a6ff; }
+  .footer a {
+    color: #58a6ff; text-decoration: none;
+    font-family: -apple-system, sans-serif;
+    font-size: 0.82rem;
+  }
+  .footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <h1>🌿 GreenLoop FPV</h1>
+    <div class="meta-mini" id="meta-mini">—</div>
+  </div>
+
+  <div class="layout">
+
+    <!-- ТАБЫ -->
+    <div class="tabs">
+      <button class="tab active" data-tab="servo">🎛️</button>
+      <button class="tab" data-tab="zoom">🔍</button>
+      <button class="tab" data-tab="rotate">🔄</button>
+      <button class="tab" data-tab="flip">🪞</button>
+    </div>
+
+    <!-- СТРИМ -->
+    <div class="stream-wrap">
+      <img id="stream-img" src="" alt="FPV поток">
+    </div>
+
+    <!-- ПАНЕЛЬ -->
+    <div class="sidebar">
+      <div class="panel">
+
+        <!-- СЕКЦИЯ: СЕРВО -->
+        <div class="section active" data-section="servo">
+          <div class="section-title">🎛️ Поворот башни</div>
+          <div class="angle-display" id="angle">90°</div>
+          <div class="dpad">
+            <div class="empty"></div>
+            <button onclick="setAngle(currentAngle + 5)">▲</button>
+            <div class="empty"></div>
+            <button onclick="setAngle(currentAngle - 5)">◀</button>
+            <button onclick="setAngle(90)">●</button>
+            <button onclick="setAngle(currentAngle + 5)">▶</button>
+            <div class="empty"></div>
+            <button onclick="setAngle(currentAngle - 5)">▼</button>
+            <div class="empty"></div>
+          </div>
+          <div class="buttons cols-4">
+            <button onclick="setAngle(0)">0°</button>
+            <button onclick="setAngle(45)">45°</button>
+            <button onclick="setAngle(90)">90°</button>
+            <button onclick="setAngle(180)">180°</button>
+          </div>
+        </div>
+
+        <!-- СЕКЦИЯ: ЗУМ -->
+        <div class="section" data-section="zoom">
+          <div class="section-title">🔍 Цифровой зум</div>
+          <div class="buttons cols-4">
+            <button onclick="setCssZoom(1)"   id="zoom-1">1x</button>
+            <button onclick="setCssZoom(1.5)" id="zoom-15">1.5x</button>
+            <button onclick="setCssZoom(2)"   id="zoom-2">2x</button>
+            <button onclick="setCssZoom(3)"   id="zoom-3">3x</button>
+          </div>
+        </div>
+
+        <!-- СЕКЦИЯ: ПОВОРОТ -->
+        <div class="section" data-section="rotate">
+          <div class="section-title">🔄 Поворот изображения</div>
+          <div class="buttons cols-4">
+            <button onclick="setRotation(0)"   id="rot-0">0°</button>
+            <button onclick="setRotation(90)"  id="rot-90">↻90°</button>
+            <button onclick="setRotation(180)" id="rot-180">180°</button>
+            <button onclick="setRotation(270)" id="rot-270">↺90°</button>
+          </div>
+        </div>
+
+        <!-- СЕКЦИЯ: ЗЕРКАЛО -->
+        <div class="section" data-section="flip">
+          <div class="section-title">🪞 Зеркало</div>
+          <div class="buttons cols-4">
+            <button onclick="toggleFlip('h')" id="flip-h">↔️ H</button>
+            <button onclick="toggleFlip('v')" id="flip-v">↕️ V</button>
+            <button onclick="resetAll()" style="grid-column: span 2;">⟲ Сброс</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <div class="stats">
+      FPS: <span id="fps">—</span> ·
+      RSSI: <span id="rssi">—</span> dBm ·
+      IP: <span id="ip">—</span>
+    </div>
+    <a href="/setup">⚙️ Настройки</a>
+  </div>
+
+</div>
+
+<script>
+// ==================== СЕРВО ====================
+let currentAngle = 90;
+
+async function setAngle(a) {
+  if (a < 0) a = 0;
+  if (a > 180) a = 180;
+  currentAngle = a;
+  document.getElementById('angle').textContent = a + '°';
+  try { await fetch('/servo?angle=' + a); } catch(e) {}
+}
+
+// ==================== ТРАНСФОРМАЦИИ ====================
+let rotDeg = 0, flipH = false, flipV = false, cssZoom = 1;
+
+function applyTransform() {
+  const img = document.getElementById('stream-img');
+  let t = `rotate(${rotDeg}deg) scale(${cssZoom})`;
+  if (rotDeg === 90 || rotDeg === 270) t += ' scale(0.75)';
+  if (flipH) t += ' scaleX(-1)';
+  if (flipV) t += ' scaleY(-1)';
+  img.style.transform = t;
+
+  document.querySelectorAll('[id^="rot-"]').forEach(b =>
+    b.classList.toggle('active', b.id === 'rot-' + rotDeg));
+  const fh = document.getElementById('flip-h');
+  const fv = document.getElementById('flip-v');
+  if (fh) fh.classList.toggle('active', flipH);
+  if (fv) fv.classList.toggle('active', flipV);
+}
+
+function setCssZoom(s) {
+  cssZoom = s;
+  [['zoom-1', 1], ['zoom-15', 1.5], ['zoom-2', 2], ['zoom-3', 3]].forEach(([id, v]) => {
+    const b = document.getElementById(id);
+    if (b) b.classList.toggle('active', v === s);
+  });
+  applyTransform();
+}
+
+function setRotation(d) { rotDeg = d; applyTransform(); }
+function toggleFlip(ax) {
+  if (ax === 'h') flipH = !flipH;
+  if (ax === 'v') flipV = !flipV;
+  applyTransform();
+}
+function resetAll() {
+  rotDeg = 0; flipH = false; flipV = false;
+  setCssZoom(1); applyTransform();
+}
+
+// ==================== ТАБЫ ====================
+document.querySelectorAll('.tab').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const name = this.dataset.tab;
+
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    const section = document.querySelector('[data-section="' + name + '"]');
+    if (section) section.classList.add('active');
+  });
+});
+
+// ==================== СТАТУС ====================
+async function updateStatus() {
+  try {
+    const r = await fetch('/status');
+    const j = await r.json();
+    document.getElementById('fps').textContent = j.fps;
+    document.getElementById('rssi').textContent = j.rssi;
+    document.getElementById('ip').textContent = j.ip;
+    document.getElementById('meta-mini').textContent =
+      `${j.fps} FPS · ${j.rssi} dBm · ${j.ip}`;
+  } catch(e) {}
+}
+setInterval(updateStatus, 2000);
+updateStatus();
+
+// ==================== СТРИМ ====================
+document.getElementById('stream-img').src =
+  'http://' + location.hostname + ':81/stream';
+
+// Дефолт
+setCssZoom(1);
+</script>
+</body>
+</html>
+)HTML";
+
+// ================== КАМЕРА ==================
+bool initCamera() {
+  camera_config_t cfg = {};
+  cfg.ledc_channel = LEDC_CHANNEL_0;
+  cfg.ledc_timer   = LEDC_TIMER_0;
+  cfg.pin_d0 = Y2_GPIO_NUM;  cfg.pin_d1 = Y3_GPIO_NUM;
+  cfg.pin_d2 = Y4_GPIO_NUM;  cfg.pin_d3 = Y5_GPIO_NUM;
+  cfg.pin_d4 = Y6_GPIO_NUM;  cfg.pin_d5 = Y7_GPIO_NUM;
+  cfg.pin_d6 = Y8_GPIO_NUM;  cfg.pin_d7 = Y9_GPIO_NUM;
+  cfg.pin_xclk = XCLK_GPIO_NUM;  cfg.pin_pclk = PCLK_GPIO_NUM;
+  cfg.pin_vsync = VSYNC_GPIO_NUM;  cfg.pin_href = HREF_GPIO_NUM;
+  cfg.pin_sccb_sda = SIOD_GPIO_NUM;  cfg.pin_sccb_scl = SIOC_GPIO_NUM;
+  cfg.pin_pwdn = PWDN_GPIO_NUM;  cfg.pin_reset = RESET_GPIO_NUM;
+  cfg.xclk_freq_hz = 10000000;   // 10 МГц — стабильно
+  cfg.pixel_format = PIXFORMAT_JPEG;
+  cfg.grab_mode    = CAMERA_GRAB_LATEST;
+  cfg.fb_location  = CAMERA_FB_IN_PSRAM;
+
+  if (psramFound()) {
+    cfg.frame_size   = FRAMESIZE_VGA;   // 640×480
+    cfg.jpeg_quality = 22;              // баланс
+    cfg.fb_count     = 1;               // 1 буфер
+  }
+
+  esp_err_t err = esp_camera_init(&cfg);
+  if (err != ESP_OK) {
+    Serial.printf("❌ esp_camera_init: 0x%x\n", err);
+    return false;
+  }
+  return true;
+}
+
+// ================== URL-DECODE ==================
+void url_decode(char *s) {
+  char *p = s;
+  while (*s) {
+    if (*s == '%' && s[1] && s[2]) {
+      char hex[3] = { s[1], s[2], 0 };
+      *p++ = (char)strtol(hex, NULL, 16);
+      s += 3;
+    } else if (*s == '+') { *p++ = ' '; s++; }
+    else { *p++ = *s++; }
+  }
+  *p = 0;
+}
+
+// ============================================================
+//  UI HANDLERS — ПОРТ 80
+// ============================================================
+
+static esp_err_t index_handler(httpd_req_t *req) {
+  httpd_resp_set_type(req, "text/html; charset=utf-8");
+  return httpd_resp_send(req, STREAM_HTML, HTTPD_RESP_USE_STRLEN);
+}
+
+static esp_err_t setup_handler(httpd_req_t *req) {
+  httpd_resp_set_type(req, "text/html; charset=utf-8");
+  return httpd_resp_send(req, SETUP_HTML, HTTPD_RESP_USE_STRLEN);
+}
+
+static esp_err_t scan_handler(httpd_req_t *req) {
+  httpd_resp_set_type(req, "application/json");
+  httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+
+  int n = WiFi.scanNetworks();
+  String json = "[";
+  for (int i = 0; i < n; i++) {
+    if (i > 0) json += ",";
+    json += "{\"ssid\":\"" + WiFi.SSID(i) + "\",\"rssi\":" + String(WiFi.RSSI(i)) + "}";
+  }
+  json += "]";
+  WiFi.scanDelete();
+
+  return httpd_resp_send(req, json.c_str(), HTTPD_RESP_USE_STRLEN);
+}
+
+static esp_err_t connect_handler(httpd_req_t *req) {
+  char body[256] = {0};
+  int ret = httpd_req_recv(req, body, sizeof(body) - 1);
+  if (ret <= 0) {
+    httpd_resp_set_status(req, "400");
+    httpd_resp_set_type(req, "application/json");
+    return httpd_resp_send(req,
+      "{\"error\":\"Нет данных от формы\"}", HTTPD_RESP_USE_STRLEN);
+  }
+  body[ret] = 0;
+
+  char ssid[64] = {0}, pass[64] = {0};
+  char *p = strstr(body, "ssid=");
+  if (p) {
+    p += 5;
+    char *amp = strchr(p, '&');
+    int len = amp ? (amp - p) : (int)strlen(p);
+    if (len > 63) len = 63;
+    strncpy(ssid, p, len);
+  }
+  p = strstr(body, "pass=");
+  if (p) {
+    p += 5;
+    int len = strlen(p);
+    if (len > 63) len = 63;
+    strncpy(pass, p, len);
+  }
+
+  url_decode(ssid);
+  url_decode(pass);
+
+  Serial.printf("📥 Ручное подключение к '%s'\n", ssid);
+
+  WiFi.disconnect(false, false);
+  delay(100);
+  WiFi.begin(ssid, pass);
+
+  unsigned long t0 = millis();
+  while (WiFi.status() != WL_CONNECTED && millis() - t0 < 15000) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println();
+
+  if (WiFi.status() == WL_CONNECTED) {
+    String lanIP = WiFi.localIP().toString();
+    Serial.printf("✅ STA подключено: %s\n", lanIP.c_str());
+
+    httpd_resp_set_type(req, "text/html; charset=utf-8");
+    httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+
+    String html =
+      "<!DOCTYPE html><html lang='ru'><head><meta charset='UTF-8'>"
+      "<meta name='viewport' content='width=device-width,initial-scale=1'>"
+      "<title>GreenLoop · Подключено</title>"
+      "<style>"
+      "*{box-sizing:border-box}"
+      "body{background:#0d1117;color:#e6edf3;font-family:-apple-system,sans-serif;"
+      "display:flex;justify-content:center;align-items:center;"
+      "min-height:100vh;margin:0;padding:20px}"
+      ".card{background:#161b22;border:1px solid #30363d;border-radius:16px;"
+      "padding:32px;max-width:480px;width:100%;text-align:center}"
+      "h1{color:#3fb950;margin:0 0 8px}"
+      ".ok{background:rgba(63,185,80,0.15);color:#3fb950;padding:12px;"
+      "border-radius:8px;margin:16px 0;font-weight:600}"
+      ".ip{background:#0d1117;padding:10px;border-radius:8px;"
+      "font-family:monospace;color:#58a6ff;margin:8px 0;font-size:0.95rem}"
+      ".btn{display:block;margin:12px 0;padding:16px;background:#3fb950;"
+      "color:#fff;text-decoration:none;border-radius:8px;font-weight:700;"
+      "font-size:1rem;transition:background 0.2s}"
+      ".btn:hover{background:#2ea043}"
+      ".btn--alt{background:#21262d;border:1px solid #30363d}"
+      ".btn--alt:hover{background:#30363d;border-color:#3fb950}"
+      ".back{display:inline-block;margin-top:16px;color:#58a6ff;"
+      "text-decoration:none;font-size:0.9rem}"
+      "</style></head><body>"
+      "<div class='card'>"
+      "<h1>✅ Подключено!</h1>"
+      "<div class='ok'>ESP32 успешно подключена к сети</div>"
+
+      "<p style='opacity:0.7;margin:8px 0'>LAN-адрес:</p>"
+      "<div class='ip'>" + lanIP + "</div>"
+      "<a href='http://" + lanIP + "/' class='btn'>🚀 Открыть через LAN</a>"
+
+      "<p style='opacity:0.7;margin:16px 0 8px'>AP-адрес:</p>"
+      "<div class='ip'>192.168.4.1</div>"
+      "<a href='http://192.168.4.1/' class='btn btn--alt'>📡 Открыть через AP</a>"
+
+      "<p style='opacity:0.7;margin:16px 0 8px'>mDNS:</p>"
+      "<div class='ip'>greenloop.local</div>"
+      "<a href='http://greenloop.local/' class='btn btn--alt'>🌐 Открыть через mDNS</a>"
+
+      "<a href='/setup' class='back'>← Назад к настройкам</a>"
+      "</div></body></html>";
+
+    return httpd_resp_send(req, html.c_str(), HTTPD_RESP_USE_STRLEN);
+  }
+
+  Serial.println("❌ STA FAIL");
+  httpd_resp_set_status(req, "400");
+  httpd_resp_set_type(req, "application/json");
+  httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+
+  String errJson = "{\"error\":\"Неверный пароль или сеть '" + String(ssid) + "' недоступна\"}";
+  return httpd_resp_send(req, errJson.c_str(), HTTPD_RESP_USE_STRLEN);
+}
+
+static esp_err_t servo_handler(httpd_req_t *req) {
+  httpd_resp_set_type(req, "application/json");
+  httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+
+  char buf[64];
+  int len = httpd_req_get_url_query_len(req) + 1;
+  if (len > 1 && len < (int)sizeof(buf)) {
+    if (httpd_req_get_url_query_str(req, buf, len) == ESP_OK) {
+      char val[8];
+      if (httpd_query_key_value(buf, "angle", val, sizeof(val)) == ESP_OK) {
+        int angle = atoi(val);
+        if (angle < 0) angle = 0;
+        if (angle > 180) angle = 180;
+        targetAngle = angle;
+        Serial.printf("🎛️ Servo -> %d°\n", angle);
+      }
+    }
+  }
+  char out[32];
+  snprintf(out, sizeof(out), "{\"angle\":%d}", targetAngle);
+  return httpd_resp_send(req, out, HTTPD_RESP_USE_STRLEN);
+}
+
+static esp_err_t status_handler(httpd_req_t *req) {
+  httpd_resp_set_type(req, "application/json");
+  httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+
+  String ip = (WiFi.status() == WL_CONNECTED)
+    ? WiFi.localIP().toString()
+    : WiFi.softAPIP().toString();
+
+  int rssi = (WiFi.status() == WL_CONNECTED) ? WiFi.RSSI() : 0;
+
+  char out[200];
+  snprintf(out, sizeof(out),
+    "{\"fps\":%d,\"rssi\":%d,\"ip\":\"%s\",\"angle\":%d,\"cam\":%d,\"heap\":%u}",
+    currentFps, rssi, ip.c_str(), currentAngle,
+    cameraOK ? 1 : 0, ESP.getFreeHeap());
+  return httpd_resp_send(req, out, HTTPD_RESP_USE_STRLEN);
+}
+
+// ============================================================
+//  STREAM HANDLER — ПОРТ 81
+// ============================================================
+
+static esp_err_t stream_handler(httpd_req_t *req) {
+  camera_fb_t *fb = NULL;
+  esp_err_t res = ESP_OK;
+  char part_buf[64];
+
+  res = httpd_resp_set_type(req, "multipart/x-mixed-replace; boundary=frame");
+  if (res != ESP_OK) return res;
+  httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+
+  while (true) {
+    fb = esp_camera_fb_get();
+    if (!fb) {
+      Serial.println("⚠️ fb NULL");
+      res = ESP_FAIL;
+      break;
+    }
+
+    size_t hlen = snprintf(part_buf, sizeof(part_buf),
+      "--frame\r\nContent-Type: image/jpeg\r\nContent-Length: %u\r\n\r\n", fb->len);
+
+    res = httpd_resp_send_chunk(req, part_buf, hlen);
+    if (res == ESP_OK) res = httpd_resp_send_chunk(req, (const char*)fb->buf, fb->len);
+    if (res == ESP_OK) res = httpd_resp_send_chunk(req, "\r\n", 2);
+
+    esp_camera_fb_return(fb);
+    if (res != ESP_OK) break;
+
+    framesCount++;
+  }
+  return res;
+}
+
+// ============================================================
+//  ЗАПУСК UI-СЕРВЕРА — ПОРТ 80
+// ============================================================
+
+void startUIServer() {
+  httpd_config_t cfg = HTTPD_DEFAULT_CONFIG();
+  cfg.max_uri_handlers  = 12;
+  cfg.server_port       = 80;
+  cfg.ctrl_port         = 32768;
+  cfg.lru_purge_enable  = true;
+  cfg.stack_size        = 8192;
+
+  cfg.max_open_sockets  = 13;
+  cfg.backlog_conn      = 5;
+  cfg.recv_wait_timeout = 5;
+  cfg.send_wait_timeout = 5;
+
+  httpd_uri_t uri_index   = { "/",        HTTP_GET,  index_handler,   NULL };
+  httpd_uri_t uri_setup   = { "/setup",   HTTP_GET,  setup_handler,   NULL };
+  httpd_uri_t uri_scan    = { "/scan",    HTTP_GET,  scan_handler,    NULL };
+  httpd_uri_t uri_connect = { "/connect", HTTP_POST, connect_handler, NULL };
+  httpd_uri_t uri_servo   = { "/servo",   HTTP_GET,  servo_handler,   NULL };
+  httpd_uri_t uri_status  = { "/status",  HTTP_GET,  status_handler,  NULL };
+
+  if (httpd_start(&ui_server, &cfg) == ESP_OK) {
+    httpd_register_uri_handler(ui_server, &uri_index);
+    httpd_register_uri_handler(ui_server, &uri_setup);
+    httpd_register_uri_handler(ui_server, &uri_scan);
+    httpd_register_uri_handler(ui_server, &uri_connect);
+    httpd_register_uri_handler(ui_server, &uri_servo);
+    httpd_register_uri_handler(ui_server, &uri_status);
+    Serial.println("✅ UI server:     port 80");
+  } else {
+    Serial.println("❌ UI server FAILED");
+  }
+}
+
+// ============================================================
+//  ЗАПУСК STREAM-СЕРВЕРА — ПОРТ 81
+// ============================================================
+
+void startStreamServer() {
+  httpd_config_t cfg = HTTPD_DEFAULT_CONFIG();
+  cfg.max_uri_handlers  = 2;
+  cfg.server_port       = 81;
+  cfg.ctrl_port         = 32769;
+  cfg.lru_purge_enable  = true;
+  cfg.stack_size        = 8192;
+
+  cfg.max_open_sockets  = 7;
+  cfg.backlog_conn      = 5;
+  cfg.recv_wait_timeout = 5;
+  cfg.send_wait_timeout = 10;
+
+  httpd_uri_t uri_stream = { "/stream", HTTP_GET, stream_handler, NULL };
+
+  if (httpd_start(&stream_server, &cfg) == ESP_OK) {
+    httpd_register_uri_handler(stream_server, &uri_stream);
+    Serial.println("✅ Stream server: port 81");
+  } else {
+    Serial.println("❌ Stream server FAILED");
+  }
+}
+
+// ================== SETUP ==================
+void setup() {
+  #if ARDUINO_USB_CDC_ON_BOOT
+    Serial.begin(115200);
+    unsigned long t = millis();
+    while (!Serial && millis() - t < 3000) delay(10);
+  #else
+    Serial.begin(115200);
+    delay(1000);
+  #endif
+
+  delay(500);
+  Serial.println("\n=== BOOT ===");
+  Serial.println("=== GreenLoop FPV · FINAL v5 (adaptive UI) ===");
+  Serial.printf("PSRAM found: %d\n", psramFound());
+  Serial.printf("Free heap: %u\n", ESP.getFreeHeap());
+
+  // === СЕРВО ===
+  Serial.println("⏳ Servo init...");
+  ESP32PWM::allocateTimer(1);
+  cameraServo.setPeriodHertz(50);
+  cameraServo.attach(SERVO_PIN, 500, 2400);
+  cameraServo.write(currentAngle);
+  Serial.println("✅ Servo OK");
+
+  // === КАМЕРА ===
+  Serial.println("⏳ Camera init...");
+  if (!initCamera()) {
+    Serial.println("❌ Camera FAIL");
+    cameraOK = false;
+  } else {
+    cameraOK = true;
+    Serial.println("✅ Camera init OK");
+
+    sensor_t *s = esp_camera_sensor_get();
+    if (s) {
+      Serial.printf("   Sensor PID: 0x%02X\n", s->id.PID);
+      Serial.printf("   Sensor VER: 0x%02X\n", s->id.VER);
+    }
+
+    camera_fb_t *test_fb = esp_camera_fb_get();
+    if (test_fb) {
+      Serial.printf("✅ Test frame: %u bytes\n", test_fb->len);
+      esp_camera_fb_return(test_fb);
+    } else {
+      Serial.println("❌ Test frame FAIL");
+      cameraOK = false;
+    }
+  }
+
+  // === AP + STA ===
+  Serial.println("⏳ WiFi AP + STA...");
+  WiFi.mode(WIFI_AP_STA);
+
+  WiFi.softAP(AP_SSID, AP_PASS);
+  Serial.printf("📡 AP:  %s / %s\n", AP_SSID, AP_PASS);
+  Serial.printf("   IP:  http://%s\n", WiFi.softAPIP().toString().c_str());
+
+  Serial.printf("🔌 STA: подключение к '%s'...\n", STA_SSID);
+  WiFi.begin(STA_SSID, STA_PASS);
+
+  unsigned long t0 = millis();
+  while (WiFi.status() != WL_CONNECTED && millis() - t0 < 15000) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println();
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.printf("✅ STA подключено: http://%s\n", WiFi.localIP().toString().c_str());
+    Serial.printf("   RSSI: %d dBm\n", WiFi.RSSI());
+
+    if (MDNS.begin("greenloop")) {
+      MDNS.addService("http", "tcp", 80);
+      Serial.println("🌐 mDNS: http://greenloop.local");
+    } else {
+      Serial.println("⚠️ mDNS FAIL");
+    }
+  } else {
+    Serial.println("⚠️ STA не подключилось — только AP");
+  }
+
+  // === СЕРВЕРЫ ===
+  Serial.println("⏳ HTTP servers...");
+  startUIServer();
+  startStreamServer();
+
+  Serial.println("🚀 Готово!");
+  Serial.println("   UI:     http://greenloop.local/");
+  Serial.println("   Stream: http://greenloop.local:81/stream");
+}
+
+// ================== LOOP ==================
+void loop() {
+  unsigned long now = millis();
+  if (now - lastFpsTime >= 1000) {
+    currentFps = framesCount;
+    framesCount = 0;
+    lastFpsTime = now;
+  }
+
+  if (currentAngle != targetAngle) {
+    if (currentAngle < targetAngle) currentAngle++;
+    else currentAngle--;
+    cameraServo.write(currentAngle);
+  }
+  delay(5);
+}

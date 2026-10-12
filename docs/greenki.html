@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FPV-зрение · GreenLoop</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📹</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/redesign.css">
+</head>
+<body class="project-page">
+
+  <header class="topbar">
+    <a href="index.html" class="btn-back">← На главную</a>
+    <div class="brand">
+      <span class="logo-icon">📹</span>
+      <span>О проекте</span>
+    </div>
+  </header>
+
+  <main class="project-main">
+
+    <section class="about-hero">
+      <div class="section-label">Фестиваль «Гринки» · Номинация «Технологии для природы»</div>
+      <h1>📹 FPV-зрение для роботов и коплексов</h1>
+      <p class="lead">
+        Программный продукт на базе <strong>ESP32-S3 CAM + Wi-Fi</strong>:
+        <strong>прямая трансляция</strong>, <strong>управление камерой</strong>
+        и <strong>интеграция с базой данных</strong>.
+        Работает <strong>в браузере</strong>, без сторонних приложений.
+      </p>
+      <p class="lead" style="margin-top: 12px;">
+        Часть нашего проекта "FPV-зрение" — это <strong>«глаза»</strong> комплекса роботов по <strong>сортировке
+        и переработке пластикового материала</strong>. Камера даёт оператору
+        возможность наблюдать за процессом <strong>ИЗВНЕ</strong>, в режиме реального времени.
+      </p>
+    </section>
+
+    <section class="project-block">
+      <div class="project-block-header">
+        <div class="project-block-icon">⚠️</div>
+        <div><h2>Проблема</h2></div>
+      </div>
+      <ul class="about-list">
+        <li>Роботизированным комплексам нужны <strong>«глаза»</strong> — но IP-камеры дорогие, сложные и "НЕ НАШИ"</li>
+        <li>Оператор не видит <strong>процесс изнутри</strong> — сортировку, нагрев, экструзию и прочее</li>
+        <li>Готовые решения требуют <strong>сторонних приложений и драйверов</strong></li>
+        <li>Нужно <strong>дёшево, просто, без "кривого" перевода и без установки</strong> — прямо в браузере</li>
+      </ul>
+    </section>
+
+    <section class="project-block">
+      <div class="project-block-header">
+        <div class="project-block-icon">💡</div>
+        <div><h2>Решение</h2></div>
+      </div>
+      <p>
+        Программный продукт <strong>FPV-зрения</strong> на базе
+        <strong>платы ESP32-S3 + OV5640 + веб-интерфейс + WIFI</strong>.
+        Работает <strong>в любом браузере</strong>, без приложений.
+      </p>
+      <ul class="about-list">
+        <li>📹 <strong>Прямая трансляция</strong> с камеры ESP32-S3 по Wi-Fi</li>
+        <li>🔍 <strong>Цифровой зум</strong> — 1x / 1.5x / 2x / 3x</li>
+        <li>🔄 <strong>Поворот изображения</strong> — 0° / 90° / 180° / 270°</li>
+        <li>🪞 <strong>Зеркало H/V</strong> — для удобства оператора</li>
+        <li>🎛️ <strong>Управление серво</strong> — поворот башни камеры</li>
+        <li>🗄️ <strong>Интеграция с БД</strong> — данные и видео в одном интерфейсе</li>
+        <li>🌐 <strong>mDNS-доступ</strong> — <code>greenloop.local</code></li>
+        <li>📡 <strong>AP + STA одновременно</strong> — работает в двух сетях</li>
+      </ul>
+    </section>
+
+    <section class="project-block">
+      <div class="project-block-header">
+        <div class="project-block-icon">⚙️</div>
+        <div><h2>Как это работает</h2></div>
+      </div>
+      <div class="how-grid">
+        <div class="how-card">
+          <div class="how-num">1</div>
+          <h3>Камера</h3>
+          <p>ESP32-S3 снимает и передаёт видео по Wi-Fi</p>
+        </div>
+        <div class="how-card">
+          <div class="how-num">2</div>
+          <h3>Сеть</h3>
+          <p>mDNS <code>greenloop.local</code> или точка доступа</p>
+        </div>
+        <div class="how-card">
+          <div class="how-num">3</div>
+          <h3>UI</h3>
+          <p>Веб-интерфейс с зумом, поворотом, зеркалом</p>
+        </div>
+        <div class="how-card">
+          <div class="how-num">4</div>
+          <h3>Интеграция</h3>
+          <p>Связка с базой данных и отчётами</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="project-block">
+      <div class="project-block-header">
+        <div class="project-block-icon">🎯</div>
+        <div><h2>Где применяется</h2></div>
+      </div>
+      <p>
+        FPV-зрение — <strong>универсальный модуль</strong>. Для фестиваля
+        <strong>«Гринки»</strong> мы демонстрируем наш продукт в связи с комплексом роботов
+        по <strong>сортировке и переработке пластика</strong>:
+      </p>
+      <ul class="about-list">
+        <li>♻️ <strong>Агрегат-сортировщик</strong> — контроль по цвету и размеру</li>
+        <li>🔥 <strong>Мини-фабрика филамента</strong> — контроль нагрева и экструзии</li>
+        <li>🖨️ <strong>3D-печать</strong> — наблюдение за процессом печати</li>
+        <li>🏭 <strong>Большой комплекс</strong> — единая система зрения для всех узлов</li>
+      </ul>
+      <p style="margin-top: 12px; opacity: 0.85;">
+        FPV-зрение — это <strong>не «камера для одного робота»</strong>,
+        а <strong>модульное решение</strong>, которое можно масштабировать
+        на <strong>любой производственный агрегат</strong>.
+      </p>
+    </section>
+
+    <section class="project-block">
+      <div class="project-block-header">
+        <div class="project-block-icon">✅</div>
+        <div><h2>Что уже сделано</h2></div>
+      </div>
+      <ul class="about-list about-list--done">
+        <li>✅ <strong>Прошивка ESP32-S3</strong> — работает стабильно</li>
+        <li>✅ <strong>Камера OV5640</strong> — прямая трансляция в браузер</li>
+        <li>✅ <strong>Адаптивный веб-интерфейс</strong> — ПК и телефон</li>
+        <li>✅ <strong>Зум + поворот + зеркало</strong> — всё работает</li>
+        <li>✅ <strong>mDNS + AP + STA</strong> — три способа подключения</li>
+        <li>✅ <strong>Двухпортовая схема</strong> — UI и стрим раздельно</li>
+        <li>✅ <strong>SVG-иконки</strong> в интерфейсе</li>
+      </ul>
+    </section>
+
+    <section class="project-block">
+      <div class="project-block-header">
+        <div class="project-block-icon">🚀</div>
+        <div><h2>Перспективы</h2></div>
+      </div>
+      <ul class="about-list">
+        <li>🧠 <strong>Нейросеть</strong> для распознавания материмала прямо на ESP32</li>
+        <li>🎛️ <strong>Серво-башня</strong> — полный поворот камеры по трём осям</li>
+        <li>📱 <strong>Мобильное приложение</strong> — альтернатива браузеру ПК</li>
+        <li>🏭 <strong>Масштабирование</strong> на любые комплексы роботов (Thread, Zigbee, Bluetooth Mesh)</li>
+        <li>🌐 <strong>5 ГГц Wi-Fi</strong> — для более высокого FPS</li>
+      </ul>
+    </section>
+
+    <div class="project-block-actions" style="margin-top: 2rem;">
+      <a href="fpv.html" class="btn btn-primary btn-lg">📱 Открыть демо FPV</a>
+      <a href="index.html" class="btn">← На главную</a>
+    </div>
+
+  </main>
+
+</body>
+</html>

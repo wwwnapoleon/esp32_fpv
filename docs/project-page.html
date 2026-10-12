@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Проект · ЭКО-ШКОЛА</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏫</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/redesign.css">
+  <style>
+    /* По умолчанию — ничего не видно */
+    .project-grid { display: none !important; }
+    /* Гость / ученик — только FPV */
+    body.is-guest #grid-guest { display: grid !important; grid-template-columns: 1fr !important; }
+    /* Админ — обе плитки */
+    body.is-admin #grid-admin { display: grid !important; }
+  </style>
+</head>
+<body class="project-page is-guest">
+
+  <header class="topbar">
+    <a href="index.html" class="btn-back">← На главную</a>
+    <div class="brand">
+      <span class="logo-icon">🏫</span>
+      <span>Проект · Виртуальное зрение</span>
+    </div>
+    <div class="topbar-actions">
+      <span id="user-role" class="role-badge">…</span>
+      <button id="logout-btn" class="btn-logout" style="display:none;">Выйти</button>
+    </div>
+  </header>
+
+  <main class="project-main">
+
+    <h1>🏫 Страница проекта</h1>
+    <p class="lead" id="project-lead">
+      Прямой доступ к FPV-камере робота.
+    </p>
+
+    <!-- ГОСТЮ: FPV -->
+    <div class="project-grid" id="grid-guest">
+      <a href="fpv.html" class="project-tile project-tile--fpv">
+        <div class="project-tile-icon">📹</div>
+        <h2>FPV камера</h2>
+        <p class="project-tile-sub">Прямая трансляция</p>
+        <p class="project-tile-desc">Поток с камеры ESP32-S3 в реальном времени.</p>
+        <ul class="project-tile-features">
+          <li>📹 Трансляция с робота</li>
+          <li>👀 Только просмотр</li>
+        </ul>
+        <span class="btn btn-primary">Открыть FPV →</span>
+      </a>
+    </div>
+
+    <!-- АДМИНУ: FPV + БД -->
+    <div class="project-grid" id="grid-admin">
+      <a href="fpv.html" class="project-tile project-tile--fpv">
+        <div class="project-tile-icon">📹</div>
+        <h2>FPV камера</h2>
+        <p class="project-tile-sub">Прямая трансляция</p>
+        <p class="project-tile-desc">Поток с камеры + управление.</p>
+        <ul class="project-tile-features">
+          <li>📹 Трансляция</li>
+          <li>📸 Снимок</li>
+          <li>🎛️ Серво</li>
+          <li>📊 FPS</li>
+        </ul>
+        <span class="btn btn-primary">Открыть FPV →</span>
+      </a>
+
+      <a href="database.html" class="project-tile project-tile--db">
+        <div class="project-tile-icon">🗄️</div>
+        <h2>База данных</h2>
+        <p class="project-tile-sub">ЭКО-ШКОЛА</p>
+        <p class="project-tile-desc">Все регистрации.</p>
+        <ul class="project-tile-features">
+          <li>🗄️ Участники</li>
+          <li>🔍 Поиск</li>
+          <li>⬇️ Выгрузка</li>
+        </ul>
+        <span class="btn btn-primary">Открыть БД →</span>
+      </a>
+    </div>
+
+    <div class="project-admin-link" id="admin-link" style="display:none;">
+      <a href="admin-login.html">>👑 Вход для админа</a>
+    </div>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    (async function init() {
+      var admin = null;
+      try {
+        if (typeof getAdminUser === 'function') admin = await getAdminUser();
+      } catch(e) {}
+
+      var isRealAdmin = admin && admin.email;
+      var user = getUser();
+
+      var roleEl    = document.getElementById('user-role');
+      var logoutBtn = document.getElementById('logout-btn');
+      var adminLink = document.getElementById('admin-link');
+      var leadEl    = document.getElementById('project-lead');
+
+      // ⚠️ ВСЁ через классы body
+      document.body.classList.remove('is-admin', 'is-guest');
+
+      if (isRealAdmin) {
+        document.body.classList.add('is-admin');
+        if (roleEl) roleEl.textContent = '👑 ' + admin.email;
+        if (logoutBtn) {
+          logoutBtn.style.display = 'inline-flex';
+          logoutBtn.addEventListener('click', function() {
+            if (typeof logoutAdmin === 'function') logoutAdmin();
+          });
+        }
+        if (leadEl) leadEl.textContent = 'Прямой доступ к FPV-камере и базе данных. Выберите раздел:';
+
+      } else {
+        document.body.classList.add('is-guest');
+        if (user) {
+          if (roleEl) roleEl.textContent = '👤 ' + (user.fio || 'Ученик');
+        } else {
+          if (roleEl) roleEl.textContent = '👀 Гость';
+          if (adminLink) adminLink.style.display = 'block';
+        }
+        if (leadEl) leadEl.textContent = 'Прямой доступ к FPV-камере робота:';
+      }
+    })();
+  </script>
+
+</body>
+</html>

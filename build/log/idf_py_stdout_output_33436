@@ -1,0 +1,6 @@
+Command: cmake -G Ninja -DPYTHON_DEPS_CHECKED=1 -DPYTHON=C:\Espressif\python_env\idf5.5_py3.11_env\Scripts\python.exe -DESP_PLATFORM=1 -DCCACHE_ENABLE=1 C:\Users\Андрей\Desktop\GitHub_Projects\greenKI-fpv
+-- Could NOT find Git (missing: GIT_EXECUTABLE) 
+Hint: The project() command has not yet been called.  It sets up system-specific search paths.
+-- Component directory C:/Espressif/frameworks/esp-idf-v5.5.5/components/esp_blockdev does not contain a CMakeLists.txt file. No component will be added
+-- git rev-parse returned ''
+-- Configuring incomplete, errors occurred!

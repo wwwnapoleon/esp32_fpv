@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FPV-зрение · GreenLoop</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📹</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/redesign.css">
+</head>
+<body class="fpv-page">
+
+  <header class="topbar">
+    <div class="topbar-left">
+      <a href="project-page.html" class="btn-back">← Назад</a>
+    </div>
+
+    <div class="topbar-center">
+      <span class="logo-icon">📹</span>
+      <span>FPV-зрение</span>
+    </div>
+
+    <div class="topbar-right">
+      <span id="user-role" class="role-badge">…</span>
+      <button id="logout-btn" class="btn-logout" style="display:none;">Выйти</button>
+    </div>
+  </header>
+
+  <main class="fpv-main">
+
+    <h1>📹 FPV-зрение для экологических роботов</h1>
+    <p class="lead">
+      Программный продукт на базе <strong>ESP32-S3 + Wi-Fi</strong>:
+      прямая трансляция, управление серво и интеграция с базой данных.
+      Работает в браузере, без сторонних приложений.
+    </p>
+
+    <!-- ТАБЫ -->
+    <div class="fpv-tabs" role="tablist">
+      <button class="fpv-tab active" data-tab="live" role="tab">📡 Живая камера</button>
+      <button class="fpv-tab" data-tab="connect" role="tab">🔌 Как подключиться</button>
+      <button class="fpv-tab" data-tab="demo" role="tab">🎬 Демо FPV-зрения</button>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ВКЛАДКА 1: ЖИВАЯ КАМЕРА                                       -->
+    <!-- ============================================================ -->
+    <div class="fpv-tab-content" id="tab-live">
+
+      <div class="fpv-launch-card">
+        <h2>Прямой эфир</h2>
+        <p class="fpv-launch-desc">
+          FPV-поток с ESP32-S3. Доступен организован <strong>тремя способами</strong>.
+          Работает <strong>пока! только в локальных сетях</strong> — это ограничение железа, а не программы.
+        </p>
+
+        <div class="fpv-launch-actions">
+          <a href="http://greenloop.local" target="_blank" class="btn btn-primary btn-lg">
+            🌐 Открыть камеру (mDNS)
+          </a>
+          <button type="button" class="btn btn-ghost" id="toggle-instruction">
+            ❓ Как подключиться?
+          </button>
+        </div>
+
+        <div class="fpv-launch-instruction" id="fpv-instruction" hidden>
+          <h4>📱 Три способа подключения</h4>
+
+          <p style="margin:0 0 12px;font-weight:600;color:#3fb950;">
+            🌐 Способ 1 — mDNS (рекомендую)
+          </p>
+          <ol>
+            <li>Подключитесь к Wi-Fi <strong>RGB_Route</strong> <span class="hint-badge">2.4 ГГц</span></li>
+            <li>Пароль:
+              <code>1234567890</code>
+              <button type="button" class="copy-btn" data-copy="1234567890" title="Скопировать">📋</button>
+            </li>
+            <li>Откройте в браузере <code>greenloop.local</code> — увидите прямой эфир.</li>
+          </ol>
+
+          <p style="margin:16px 0 12px;font-weight:600;color:#3fb950;">
+            🚀 Способ 2 — LAN по IP
+          </p>
+          <ol>
+            <li>Подключитесь к Wi-Fi <strong>RGB_Route</strong></li>
+            <li>Откройте <code>192.168.100.7</code> в браузере</li>
+          </ol>
+
+          <p style="margin:16px 0 12px;font-weight:600;color:#3fb950;">
+            📡 Способ 3 — точка доступа (если нет RGB_Route)
+          </p>
+          <ol>
+            <li>Подключитесь к Wi-Fi <strong>GreenLoop-Setup</strong></li>
+            <li>Пароль: <code>12345678</code></li>
+            <li>Откройте <code>192.168.4.1</code></li>
+          </ol>
+
+          <p class="fpv-tip">
+            💡 Если камера не открывается — попробуйте другой способ.
+            ESP32 работает в двух режимах сразу.
+          </p>
+        </div>
+      </div>
+
+      <!-- Панель быстрых действий — ТОЛЬКО ДЛЯ АДМИНА -->
+      <div class="fpv-quick-actions" id="admin-actions" style="display:none;">
+        <a href="http://greenloop.local/capture" target="_blank" class="btn">
+          📸 Сделать снимок
+        </a>
+        <a href="http://greenloop.local/status" target="_blank" class="btn">
+          📊 Статус камеры
+        </a>
+        <a href="http://greenloop.local/setup" target="_blank" class="btn">
+          ⚙️ Настройки Wi-Fi
+        </a>
+      </div>
+
+      <div class="project-block">
+        <div class="project-block-header">
+          <div class="project-block-icon">🧠</div>
+          <div><h3>Что даёт FPV-зрение</h3></div>
+        </div>
+        <ul class="about-list">
+          <li>👁️ Взгляд изнутри — полный визуальный контроль</li>
+          <li>⚡ Реакция в реальном времени — без задержек</li>
+          <li>🎛️ Управление серво — поворот камеры из браузера</li>
+          <li>🗄️ Интеграция с БД — данные и видео в одном интерфейсе</li>
+          <li>💰 Дешевле аналогов — ESP32-S3 вместо сложных и громоздких устройств</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ВКЛАДКА 2: КАК ПОДКЛЮЧИТЬСЯ                                    -->
+    <!-- ============================================================ -->
+    <div class="fpv-tab-content" id="tab-connect" hidden>
+
+      <div class="fpv-launch-card">
+        <h2>Подключение к камере</h2>
+        <p class="fpv-launch-desc">
+          Пошаговая демонстрация: от Wi-Fi до живой картинки в браузере.
+        </p>
+
+        <video controls preload="metadata" playsinline
+               style="width:100%; border-radius:12px; margin-top:1rem; background:#000;">
+          <source src="videos/connect-lan.mp4" type="video/mp4">
+          Ваш браузер не поддерживает видео.
+        </video>
+
+        <div class="fpv-launch-instruction" style="margin-top:1.25rem;">
+          <h4>📱 Быстрая инструкция</h4>
+          <ol>
+            <li>Подключитесь к Wi-Fi <strong>RGB_Route</strong> <span class="hint-badge">2.4 ГГц</span></li>
+            <li>Пароль: <code>1234567890</code></li>
+            <li>Откройте <code>greenloop.local</code> или <code>192.168.100.7</code></li>
+            <li>Управляйте камерой и снимайте кадры</li>
+          </ol>
+          <p class="fpv-tip">
+            📡 Если RGB_Route недоступна — подключитесь к <strong>GreenLoop-Setup</strong>
+            (пароль <code>12345678</code>) и откройте <code>192.168.4.1</code>.
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- ВКЛАДКА 3: ДЕМО FPV-ЗРЕНИЯ                                     -->
+    <!-- ============================================================ -->
+    <div class="fpv-tab-content" id="tab-demo" hidden>
+
+      <div class="fpv-launch-card">
+        <h2>FPV-зрение в работе</h2>
+        <p class="fpv-launch-desc">
+          Как камера помогает контролировать процесс работы агрегата
+          в реальном времени со стороны (в начальной версии).
+        </p>
+
+        <video controls preload="metadata" playsinline
+               style="width:100%; border-radius:12px; margin-top:1rem; background:#000;">
+          <source src="videos/demo_work.mp4" type="video/mp4">
+          Ваш браузер не поддерживает видео.
+        </video>
+      </div>
+
+      <div class="project-block">
+        <div class="project-block-header">
+          <div class="project-block-icon">📋</div>
+          <div><h3>Что показывает запись</h3></div>
+        </div>
+        <ul class="about-list">
+          <li>👁️ Взгляд на работу агрегата извне — безопасность производства</li>
+          <li>🔥 Контроль параметров работы в реальном времени</li>
+          <li>🎛️ Управление камерой — поворот камеры под нужным углом + зеркалирование</li>
+        </ul>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    // ---- ТАБЫ ----
+    (function() {
+      var tabs = document.querySelectorAll('.fpv-tab');
+      var contents = document.querySelectorAll('.fpv-tab-content');
+      tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+          tabs.forEach(function(t) { t.classList.remove('active'); });
+          contents.forEach(function(c) { c.setAttribute('hidden', ''); });
+          tab.classList.add('active');
+          var target = document.getElementById('tab-' + tab.dataset.tab);
+          if (target) target.removeAttribute('hidden');
+        });
+      });
+    })();
+
+    // ---- РАСКРЫВАЮЩАЯСЯ ИНСТРУКЦИЯ + КОПИРОВАНИЕ ПАРОЛЯ ----
+    (function() {
+      var toggleBtn = document.getElementById('toggle-instruction');
+      var block     = document.getElementById('fpv-instruction');
+      if (toggleBtn && block) {
+        toggleBtn.addEventListener('click', function() {
+          if (block.hasAttribute('hidden')) {
+            block.removeAttribute('hidden');
+            toggleBtn.textContent = '❌ Скрыть инструкцию';
+          } else {
+            block.setAttribute('hidden', '');
+            toggleBtn.textContent = '❓ Как подключиться?';
+          }
+        });
+      }
+
+      document.querySelectorAll('.copy-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var text = btn.getAttribute('data-copy');
+          navigator.clipboard.writeText(text).then(function() {
+            var old = btn.textContent;
+            btn.textContent = '✅';
+            setTimeout(function() { btn.textContent = old; }, 1200);
+          });
+        });
+      });
+    })();
+
+    // ---- АВТОРИЗАЦИЯ ----
+    (async function init() {
+      var admin = null;
+      try {
+        if (typeof getAdminUser === 'function') admin = await getAdminUser();
+      } catch(e) {}
+
+      var isRealAdmin = admin && admin.email;
+
+      var roleEl = document.getElementById('user-role');
+      var logoutBtn = document.getElementById('logout-btn');
+      var adminActions = document.getElementById('admin-actions');
+
+      if (isRealAdmin) {
+        // === АДМИН ===
+        if (roleEl) roleEl.textContent = '👑 ' + admin.email;
+        document.body.classList.remove('is-guest');
+        document.body.classList.add('is-admin');
+
+        if (logoutBtn) {
+          logoutBtn.style.display = 'inline-flex';
+          logoutBtn.addEventListener('click', function() {
+            if (typeof logoutAdmin === 'function') logoutAdmin();
+          });
+        }
+
+        if (adminActions) adminActions.style.display = 'flex';
+
+      } else {
+        // === ГОСТЬ ===
+        if (roleEl) roleEl.textContent = '👀 Гость (только просмотр)';
+        document.body.classList.remove('is-admin');
+        document.body.classList.add('is-guest');
+
+        if (logoutBtn) logoutBtn.style.display = 'none';
+        if (adminActions) adminActions.style.display = 'none';
+      }
+    })();
+  </script>
+
+</body>
+</html>

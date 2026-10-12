@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Проект · ЭКО-ШКОЛА</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏫</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/redesign.css">
+</head>
+<body class="project-page">
+
+  <header class="topbar">
+    <a href="index.html" class="btn-back">← На главную</a>
+    <div class="brand">
+      <span class="logo-icon">🏫</span>
+      <span>Проект · Виртуальное зрение</span>
+    </div>
+    <div class="topbar-actions">
+      <span id="user-role" class="role-badge">…</span>
+      <button id="logout-btn" class="btn-logout" style="display:none;">Выйти</button>
+    </div>
+  </header>
+
+  <main class="project-main">
+
+    <h1>🏫 Страница проекта</h1>
+    <p class="lead">
+      Прямой доступ к FPV-камере робота и базе данных проекта.
+    </p>
+
+    <!-- БЛОК 1: FPV камера -->
+    <section class="project-block">
+      <div class="project-block-header">
+        <div class="project-block-icon">📹</div>
+        <div>
+          <h2>FPV камера робота</h2>
+          <p class="project-block-desc">Прямая трансляция с ESP32-S3</p>
+        </div>
+      </div>
+
+      <div class="fpv-embed">
+        <img id="fpv-stream" alt="FPV поток">
+        <div class="fpv-overlay" id="fpv-overlay">
+          ⏳ Нажмите «Подключить»
+        </div>
+      </div>
+
+      <div class="project-block-actions">
+        <button id="fpv-connect" class="btn btn-primary">🔄 Подключить</button>
+        <a href="http://192.168.100.7" target="_blank" class="btn">
+          📹 Открыть в новой вкладке
+        </a>
+        <span id="fpv-status" class="project-status">FPS: —</span>
+      </div>
+
+      <!-- Управление серво — только для админа -->
+      <div class="servo-controls admin-only" style="display: none;">
+        <h3>🎛️ Управление серво</h3>
+        <div class="row">
+          <label>PAN</label>
+          <input type="range" id="pan" min="0" max="180" value="90">
+          <span id="pan-val">90°</span>
+        </div>
+        <div class="row">
+          <label>TILT</label>
+          <input type="range" id="tilt" min="0" max="180" value="90">
+          <span id="tilt-val">90°</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- БЛОК 2: База данных -->
+    <section class="project-block">
+      <div class="project-block-header">
+        <div class="project-block-icon">🗄️</div>
+        <div>
+          <h2>База данных · ЭКО-ШКОЛА</h2>
+          <p class="project-block-desc" id="db-count">Загрузка...</p>
+        </div>
+      </div>
+
+      <div class="db-toolbar">
+        <input type="text" id="db-search" placeholder="🔍 Поиск по ФИО или классу...">
+        <button id="db-refresh" class="btn">🔄 Обновить</button>
+      </div>
+
+      <table class="data-table" id="db-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>ФИО</th>
+            <th>Класс</th>
+            <th>Цвет</th>
+            <th>Дата</th>
+          </tr>
+        </thead>
+        <tbody id="db-body">
+          <tr><td colspan="5" class="empty">Загрузка...</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    // ============================================================
+    //  СТРАНИЦА ПРОЕКТА
+    // ============================================================
+    var CAMERA_URL = 'http://192.168.100.7';
+    var STREAM_URL = CAMERA_URL + '/stream';
+    var STATUS_URL = CAMERA_URL + ':81/status';
+
+    var streamImg = document.getElementById('fpv-stream');
+    var overlay   = document.getElementById('fpv-overlay');
+
+    // ---- FPV ----
+    function connectFpv() {
+      overlay.style.display = 'flex';
+      overlay.textContent = '⏳ Подключение к ' + STREAM_URL + '...';
+
+      var test = new Image();
+      var timeout = setTimeout(function() {
+        test.src = '';
+        overlay.textContent = '❌ Камера недоступна. Проверьте Wi-Fi RGB_Route';
+      }, 5000);
+
+      test.onload = function() {
+        clearTimeout(timeout);
+        streamImg.src = STREAM_URL + '?t=' + Date.now();
+        overlay.style.display = 'none';
+        updateFpvStatus();
+      };
+
+      test.onerror = function() {
+        clearTimeout(timeout);
+        overlay.textContent = '❌ Поток недоступен. Откройте в новой вкладке.';
+      };
+
+      test.src = STREAM_URL + '?t=' + Date.now();
+    }
+
+    function updateFpvStatus() {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', STATUS_URL + '?t=' + Date.now(), true);
+      xhr.timeout = 2000;
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          try {
+            var j = JSON.parse(xhr.responseText);
+            var el = document.getElementById('fpv-status');
+            if (el) el.textContent = 'FPS: ' + j.fps + ' | RSSI: ' + j.rssi + ' dBm';
+          } catch(e) {}
+        }
+      };
+      try { xhr.send(); } catch(e) {}
+    }
+
+    var fpvBtn = document.getElementById('fpv-connect');
+    if (fpvBtn) fpvBtn.addEventListener('click', connectFpv);
+    setInterval(updateFpvStatus, 3000);
+
+    // ---- БД ----
+    async function loadDb() {
+      var tbody = document.getElementById('db-body');
+      var countEl = document.getElementById('db-count');
+
+      if (!tbody) return;
+
+      if (typeof SB === 'undefined' || !SB) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty">Supabase не настроен</td></tr>';
+        if (countEl) countEl.textContent = 'Ошибка подключения';
+        return;
+      }
+
+      try {
+        var result = await SB
+          .from('students')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (result.error) throw result.error;
+
+        var rows = result.data || [];
+        if (countEl) countEl.textContent = 'Всего записей: ' + rows.length;
+
+        if (rows.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="empty">Нет регистраций</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = rows.map(function(r, i) {
+          return '<tr>' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td><strong>' + escapeHtml(r.fio) + '</strong></td>' +
+            '<td>' + escapeHtml(r.class) + '</td>' +
+            '<td><span style="display:inline-block;width:16px;height:16px;border-radius:4px;background:' + r.color + ';vertical-align:middle;"></span> ' + r.color + '</td>' +
+            '<td>' + formatDate(r.created_at) + '</td>' +
+            '</tr>';
+        }).join('');
+
+      } catch (err) {
+        console.error('DB error:', err);
+        tbody.innerHTML = '<tr><td colspan="5" class="empty">Ошибка: ' + escapeHtml(err.message) + '</td></tr>';
+      }
+    }
+
+    function escapeHtml(s) {
+      if (!s) return '';
+      return String(s).replace(/[&<>"']/g, function(c) {
+        return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+      });
+    }
+
+    function formatDate(iso) {
+      if (!iso) return '—';
+      try {
+        var d = new Date(iso);
+        return d.toLocaleDateString('ru-RU') + ' ' +
+               d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+      } catch(e) { return iso; }
+    }
+
+    var refreshBtn = document.getElementById('db-refresh');
+    if (refreshBtn) refreshBtn.addEventListener('click', loadDb);
+
+    var searchInput = document.getElementById('db-search');
+    if (searchInput) searchInput.addEventListener('input', function(e) {
+      var q = e.target.value.toLowerCase();
+      document.querySelectorAll('#db-body tr').forEach(function(row) {
+        row.style.display = row.textContent.toLowerCase().indexOf(q) !== -1 ? '' : 'none';
+      });
+    });
+
+    // ---- Управление серво (только для админа) ----
+    function initServoControls() {
+      var pan  = document.getElementById('pan');
+      var tilt = document.getElementById('tilt');
+      var panV  = document.getElementById('pan-val');
+      var tiltV = document.getElementById('tilt-val');
+
+      if (!pan || !tilt) return;
+
+      var timer = null;
+
+      function sendServo() {
+        if (panV)  panV.textContent  = pan.value + '°';
+        if (tiltV) tiltV.textContent = tilt.value + '°';
+
+        if (timer) return;
+        timer = setTimeout(function() {
+          timer = null;
+          fetch(CAMERA_URL + '/servo?pan=' + pan.value + '&tilt=' + tilt.value)
+            .catch(function() {});
+        }, 80);
+      }
+
+      pan.addEventListener('input', sendServo);
+      tilt.addEventListener('input', sendServo);
+    }
+
+    // ============================================================
+    //  ИНИЦИАЛИЗАЦИЯ — проверка прав
+    // ============================================================
+    (async function init() {
+      var admin = null;
+      try {
+        if (typeof getAdminUser === 'function') {
+          admin = await getAdminUser();
+        }
+      } catch (e) {
+        console.warn('getAdminUser error:', e);
+      }
+
+      var roleEl = document.getElementById('user-role');
+      var logoutBtn = document.getElementById('logout-btn');
+
+      if (admin) {
+        // === АДМИН ===
+        if (roleEl) roleEl.textContent = '👑 ' + (admin.email || 'admin');
+        document.body.classList.add('is-admin');
+
+        if (logoutBtn) {
+          logoutBtn.style.display = 'inline-flex';
+          logoutBtn.addEventListener('click', function() {
+            if (typeof logoutAdmin === 'function') logoutAdmin();
+          });
+        }
+
+        document.querySelectorAll('.admin-only').forEach(function(el) {
+          el.style.display = 'block';
+        });
+
+        initServoControls();
+
+      } else {
+        // === ГОСТЬ ===
+        if (roleEl) roleEl.textContent = '👀 Гость (только просмотр)';
+        document.body.classList.add('is-guest');
+      }
+
+      // Загружаем БД в любом случае
+      loadDb();
+    })();
+  </script>
+</body>
+</html>
